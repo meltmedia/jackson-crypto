@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
  * @author Christian Trimble
  *
  */
-public class ConfigurationEncryptionService extends AbstractEncryptionService<EncryptedConfiguration> {
-  private static final Logger logger = LoggerFactory.getLogger(ConfigurationEncryptionService.class);
+public class EnvironmentEncryptionService extends AbstractEncryptionService<EncryptedJson> {
+  private static final Logger logger = LoggerFactory.getLogger(EnvironmentEncryptionService.class);
 
   public static final String PASSWORD_ENV_VAR = "PASSPHRASE";
   public static final int ITERATION_COUNT = 64000;
@@ -19,10 +19,10 @@ public class ConfigurationEncryptionService extends AbstractEncryptionService<En
   
   // This value is needed from the deserializer, so it is constructed statically.  I haven't
   // found any Jackson documentation on injecting values into deserializers.
-  private static ConfigurationEncryptionService cipher;
+  private static EnvironmentEncryptionService cipher;
   static {
     try {
-      cipher = new ConfigurationEncryptionService(System.getenv(PASSWORD_ENV_VAR).toCharArray());
+      cipher = new EnvironmentEncryptionService(System.getenv(PASSWORD_ENV_VAR).toCharArray());
     } catch( Exception e ) {
       logger.error("could not create configuration cipher", e);
     }
@@ -30,21 +30,21 @@ public class ConfigurationEncryptionService extends AbstractEncryptionService<En
 
   private char[] password;
 
-  public ConfigurationEncryptionService( char[] password ) {
+  public EnvironmentEncryptionService( char[] password ) {
     this.password = password;
   }
 
-  public static ConfigurationEncryptionService getCipher() {
+  public static EnvironmentEncryptionService getCipher() {
     return cipher;
   }
   
   @Override
-  public EncryptedConfiguration newEncrypted() {
-    return new EncryptedConfiguration();
+  public EncryptedJson newEncrypted() {
+    return new EncryptedJson();
   }
 
   @Override
-  public char[] getKey( EncryptedConfiguration encrypted ) {
+  public char[] getKey( EncryptedJson encrypted ) {
     return password;
   }
 }

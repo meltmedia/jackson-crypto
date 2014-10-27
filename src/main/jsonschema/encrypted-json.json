@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "An ecrypted block of JSON.",
+  "type": "object",
+  "required": [ "salt", "iv", "value", "cipher", "keyDerivation", "keyLength", "encrypted"],
+  "properties": {
+    "salt": {
+      "type": "string",
+      "media": {
+        "binaryEncoding": "base64"
+      },
+      "description": "The salt used to encrypt this value."
+    },
+    "iv": {
+      "type": "string",
+      "media": {
+        "binaryEncoding": "base64"
+      },
+      "description": "The initialization vector used to encrypt this value."
+    },
+    "value": {
+      "type": "string",
+      "media": {
+        "binaryEncoding": "base64"
+      },
+      "description": "The value, either encrypted or decrypted, based on the encrypted flag."
+    },
+    "cipher": {
+      "type": "string",
+      "enum": ["aes-256-cbc"],
+      "description": "The cipher used to encrypt this value."
+    },
+    "keyDerivation": {
+      "type": "string",
+      "enum": ["pbkdf2"],
+      "description": "The key derivation function."
+    },
+    "keyLength": {
+      "type": "integer",
+      "description": "The length of the key used to encrypt this value."
+    },
+    "iterations": {
+      "type": "integer",
+      "description": "The number of key streching iterations used during encryption."
+    },
+    "encrypted": {
+      "type": "boolean",
+      "description": "Indicates if the value is currently encrypted."
+    },
+    "keyName": {
+      "type": "string",
+      "description": "The name of the key for this data.  If missing, the data was encrypted with a statically defined key."
+    }
+  }
+}

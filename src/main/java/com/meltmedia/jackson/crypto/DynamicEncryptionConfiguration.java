@@ -10,7 +10,7 @@ import java.util.Map;
  * @author Christian Trimble
  *
  */
-public class DataEncryptionConfiguration {
+public class DynamicEncryptionConfiguration {
   protected String currentKey;
   protected Map<String, char[]> keys = new LinkedHashMap<>();
 

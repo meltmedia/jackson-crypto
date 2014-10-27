@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import javax.validation.ValidationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.meltmedia.jackson.crypto.EncryptedValue.KeyDerivation;
+import com.meltmedia.jackson.crypto.EncryptedJson.KeyDerivation;
 
 /**
  * A base class for encryption service implementations.
@@ -56,7 +56,7 @@ import com.meltmedia.jackson.crypto.EncryptedValue.KeyDerivation;
  * @author Christian Trimble
  *
  */
-public abstract class AbstractEncryptionService<E extends EncryptedValue> {
+public abstract class AbstractEncryptionService<E extends EncryptedJson> {
   private static final Logger logger = LoggerFactory.getLogger(AbstractEncryptionService.class);
   protected static final Random random = new SecureRandom();
   public static int SALT_BYTE_LENGTH = 4;
@@ -151,9 +151,10 @@ public abstract class AbstractEncryptionService<E extends EncryptedValue> {
    * @throws EncryptionException
    */
   SecretKey createSecretKey( E encrypted ) throws EncryptionException {
-    if( encrypted.getKeyDerivation() == EncryptedValue.KeyDerivation.PBKDF_2 ) {
+    if( encrypted.getKeyDerivation() == EncryptedJson.KeyDerivation.PBKDF_2 ) {
+
+      CipherSettings settings = getCiperSettings(encrypted);
       try {
-        CipherSettings settings = getCiperSettings(encrypted);
         return stretchKey(settings.getPassword(), encrypted.getSalt(), settings.getIterationCount(), settings.getKeyLength());
       } catch( Exception e ) {
         throw new EncryptionException("could not generate secret key", e);
@@ -192,7 +193,7 @@ public abstract class AbstractEncryptionService<E extends EncryptedValue> {
    * @throws EncryptionException
    */
   Cipher createEncryptionCipher( SecretKey secret, E value ) throws EncryptionException {
-    if( value.getCipher() == EncryptedValue.Cipher.AES_256_CBC && value.getKeyDerivation() == EncryptedValue.KeyDerivation.PBKDF_2 ) {
+    if( value.getCipher() == EncryptedJson.Cipher.AES_256_CBC && value.getKeyDerivation() == EncryptedJson.KeyDerivation.PBKDF_2 ) {
       try {
         SecretKeySpec spec = new SecretKeySpec(secret.getEncoded(), "AES");
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -205,8 +206,8 @@ public abstract class AbstractEncryptionService<E extends EncryptedValue> {
       }
     }
     else {
-      throw new EncryptionException(String.format("unsupported cipher %s and key derivation %s", EncryptedValue.Cipher.AES_256_CBC,
-        EncryptedValue.KeyDerivation.PBKDF_2));
+      throw new EncryptionException(String.format("unsupported cipher %s and key derivation %s", EncryptedJson.Cipher.AES_256_CBC,
+        EncryptedJson.KeyDerivation.PBKDF_2));
     }
   }
 
@@ -220,7 +221,7 @@ public abstract class AbstractEncryptionService<E extends EncryptedValue> {
    * @throws EncryptionException if the cipher could not be created for any reason.
    */
   Cipher createDecryptionCipher( SecretKey secret, E value ) throws EncryptionException {
-    if( value.getCipher() == EncryptedValue.Cipher.AES_256_CBC && value.getKeyDerivation() == EncryptedValue.KeyDerivation.PBKDF_2 ) {
+    if( value.getCipher() == EncryptedJson.Cipher.AES_256_CBC && value.getKeyDerivation() == EncryptedJson.KeyDerivation.PBKDF_2 ) {
       try {
         SecretKeySpec spec = new SecretKeySpec(secret.getEncoded(), "AES");
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -231,8 +232,8 @@ public abstract class AbstractEncryptionService<E extends EncryptedValue> {
       }
     }
     else {
-      throw new EncryptionException(String.format("unsupported cipher %s and key derivation %s", EncryptedValue.Cipher.AES_256_CBC,
-        EncryptedValue.KeyDerivation.PBKDF_2));
+      throw new EncryptionException(String.format("unsupported cipher %s and key derivation %s", EncryptedJson.Cipher.AES_256_CBC,
+        EncryptedJson.KeyDerivation.PBKDF_2));
     }
   }
 
@@ -246,7 +247,7 @@ public abstract class AbstractEncryptionService<E extends EncryptedValue> {
   public E encrypt( byte[] data ) throws EncryptionException {
     E result = newEncrypted();
     result.setSalt(nextSalt());
-    result.setCipher(com.meltmedia.jackson.crypto.EncryptedValue.Cipher.AES_256_CBC);
+    result.setCipher(com.meltmedia.jackson.crypto.EncryptedJson.Cipher.AES_256_CBC);
     result.setKeyDerivation(KeyDerivation.PBKDF_2);
     result.setKeyLength(256);
     result.setIterations(2000);

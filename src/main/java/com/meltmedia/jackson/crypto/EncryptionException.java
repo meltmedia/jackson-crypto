@@ -6,7 +6,7 @@ package com.meltmedia.jackson.crypto;
  * @author Christian Trimble
  *
  */
-public class EncryptionException extends Exception {
+public class EncryptionException extends RuntimeException {
 
   private static final long serialVersionUID = 7704571379074325114L;
 
