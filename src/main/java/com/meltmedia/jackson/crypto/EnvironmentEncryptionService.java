@@ -4,8 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An encryption service for configuration files.  The password for this service is loaded
- * from an environment variable called `TALU_PASSWORD`.
+ * An encryption service for configuration files.  This service must be statically initialized
+ * before being used.
+ * 
+ * ```
+ *   EnvironmentEncryptionService.init(ENV_VAR);
+ * ```
  * 
  * @author Christian Trimble
  *
@@ -13,7 +17,6 @@ import org.slf4j.LoggerFactory;
 public class EnvironmentEncryptionService extends AbstractEncryptionService<EncryptedJson> {
   private static final Logger logger = LoggerFactory.getLogger(EnvironmentEncryptionService.class);
 
-  public static final String PASSWORD_ENV_VAR = "PASSPHRASE";
   public static final int ITERATION_COUNT = 64000;
   public static final int KEY_LENGTH = 256;
   
@@ -22,10 +25,14 @@ public class EnvironmentEncryptionService extends AbstractEncryptionService<Encr
   private static EnvironmentEncryptionService cipher;
   static {
     try {
-      cipher = new EnvironmentEncryptionService(System.getenv(PASSWORD_ENV_VAR).toCharArray());
+      cipher = new EnvironmentEncryptionService(null);
     } catch( Exception e ) {
       logger.error("could not create configuration cipher", e);
     }
+  }
+  
+  public static EnvironmentEncryptionService init( String envVar ) {
+	  return cipher = new EnvironmentEncryptionService(System.getenv(envVar).toCharArray());
   }
 
   private char[] password;
@@ -45,6 +52,9 @@ public class EnvironmentEncryptionService extends AbstractEncryptionService<Encr
 
   @Override
   public char[] getKey( EncryptedJson encrypted ) {
+	  if( password == null ) {
+		  throw new EncryptionException("environment encryption service not initialized");
+	  }
     return password;
   }
 }

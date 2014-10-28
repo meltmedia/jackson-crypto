@@ -84,7 +84,7 @@ public abstract class TransformingDeserializer<I>
   protected ObjectMapper objectMapper( JsonParser jp ) {
     ObjectCodec codec = jp.getCodec();
     if( codec == null )
-      codec = new ObjectMapper();//.registerModule(new JodaModule());
+      codec = new ObjectMapper();
     else if( !(codec instanceof ObjectMapper) )
       codec = new ObjectMapper(codec.getFactory());
     return (ObjectMapper) codec;
