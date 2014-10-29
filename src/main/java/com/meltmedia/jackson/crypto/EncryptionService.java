@@ -7,11 +7,9 @@ import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
-import java.util.Random;
 import java.util.Set;
 
 import javax.crypto.BadPaddingException;
@@ -56,10 +54,8 @@ import com.meltmedia.jackson.crypto.EncryptedJson.KeyDerivation;
  * @author Christian Trimble
  *
  */
-public abstract class AbstractEncryptionService<E extends EncryptedJson> {
-  private static final Logger logger = LoggerFactory.getLogger(AbstractEncryptionService.class);
-  protected static final Random random = new SecureRandom();
-  public static int SALT_BYTE_LENGTH = 4;
+public class EncryptionService<E extends EncryptedJson> {
+  private static final Logger logger = LoggerFactory.getLogger(EncryptionService.class);
 
   /**
    * Remove cryptographic restrictions in the JVM.
@@ -74,34 +70,100 @@ public abstract class AbstractEncryptionService<E extends EncryptedJson> {
     }
   }
   
-  /**
-   * Creates a validator for input.
-   */
-  static Validator createValidator() {
-    try {
-      return Validation.buildDefaultValidatorFactory().getValidator();
-    }
-    catch( ValidationException ve ) {
-      logger.error("cannot create validator", ve);
-      return null;
-    }
-  }
-  
-  ObjectMapper mapper = new ObjectMapper();
-  Validator validator = createValidator();
+  public static class Builder<E extends EncryptedJson> {
+	  ObjectMapper mapper;
+	  Validator validator;
+	  Supplier<E> encryptedSupplier;
+	  Function<String, char[]> passphraseLookup;
+	  Supplier<byte[]> saltSupplier;
+	  int iterations = Defaults.KEY_STRETCH_ITERATIONS;
+	  int keyLength = Defaults.KEY_LENGTH;
+	  
+	  public Builder<E> withObjectMapper( ObjectMapper mapper ) {
+		  this.mapper = mapper;
+		  return this;
+	  }
+	  
+	  public Builder<E> withValidator( Validator validator ) {
+		  this.validator = validator;
+		  return this;
+	  }
+	  
+	  public Builder<E> withEncryptedJsonSupplier( Supplier<E> encryptedSupplier ) {
+		  this.encryptedSupplier = encryptedSupplier;
+		  return this;
+	  }
+	  
+	  public Builder<E> withPassphraseLookup( Function<String, char[]> passphraseLookup ) {
+		  this.passphraseLookup = passphraseLookup;
+		  return this;
+	  }
+	  
+	  public Builder<E> withSaltSupplier( Supplier<byte[]> saltSupplier ) {
+		  this.saltSupplier = saltSupplier;
+		  return this;
+	  }
+	  
+		public Builder<E> withIterations(int iterations) {
+			this.iterations = iterations;
+			return this;
+		}
+		
+		public Builder<E> withKeyLength(int keyLength) {
+			this.keyLength = keyLength;
+			return this;
+		}
+	  
+	  public EncryptionService<E> build() {
+		  Supplier<byte[]> buildSaltSupplier = saltSupplier != null ? saltSupplier : Salts.saltSupplier();
+		  if( encryptedSupplier == null ) {
+			  throw new IllegalArgumentException("the encrypted supplier is required.");
+		  }
+		  if( passphraseLookup == null ) {
+			  throw new IllegalArgumentException("the key lookup function is required.");
+		  }
+		  return new EncryptionService<E>(
+				  Defaults.defaultObjectMapper(mapper),
+				  Defaults.defaultValidator(validator),
+				  buildSaltSupplier,
+				  encryptedSupplier,
+				  passphraseLookup,
+				  iterations,
+				  keyLength);
+	  }
 
-  /**
-   * Generates a new base64 encoded 4 byte salt.
-   * 
-   * @return the next secure random salt
-   */
-  protected byte[] nextSalt() {
-    byte[] salt = new byte[SALT_BYTE_LENGTH];
-    random.nextBytes(salt);
-    return salt;
   }
   
-  public abstract char[] getKey( E encrypted );
+  public static interface Supplier<T> {
+	  public T get();
+  }
+  
+  public static interface Function<D, R> {
+	  public R apply( D domain );
+  }
+  
+  public static <E extends EncryptedJson> Builder<E> builder() {
+	  return new Builder<E>();
+  }
+
+  Supplier<E> encryptedSupplier;
+  Supplier<byte[]> saltSupplier;
+  Function<String, char[]> passphraseLookup;
+  ObjectMapper mapper;
+  Validator validator;
+  int iterations;
+  int keyLength;
+  
+  public EncryptionService( ObjectMapper mapper, Validator validator, Supplier<byte[]> saltSupplier, Supplier<E> encryptedSupplier, Function<String, char[]> passphraseLookup, int iterations, int keyLength ) {
+	  this.mapper = mapper;
+	  this.validator = validator;
+	  this.encryptedSupplier = encryptedSupplier;
+	  this.passphraseLookup = passphraseLookup;
+	  this.saltSupplier = saltSupplier;
+	  this.iterations = iterations;
+	  this.keyLength = keyLength;
+  }
+
   
   private void validate(E encrypted) throws EncryptionException {
     if( encrypted == null ) {
@@ -111,9 +173,11 @@ public abstract class AbstractEncryptionService<E extends EncryptedJson> {
     Set<ConstraintViolation<E>> violations = validator.validate(encrypted);
     
     if( !violations.isEmpty() ) {
-      String info = validationErrorMessage(encrypted, violations);
-      logger.warn("invalid encrypted value.\n"+info);
-      throw new EncryptionException("invalid encrypted value.\n"+info);
+      String message = String.format(
+        "invalid encrypted value%n%s",
+        validationErrorMessage(encrypted, violations));
+      logger.warn(message);
+      throw new EncryptionException(message);
     }
   }
   
@@ -133,16 +197,6 @@ public abstract class AbstractEncryptionService<E extends EncryptedJson> {
     return sb.toString();
   }
 
-  public CipherSettings getCiperSettings( E encrypted ) {
-    CipherSettings settings = new CipherSettings();
-    settings.setIterationCount(encrypted.getIterations());
-    settings.setKeyLength(encrypted.getKeyLength());
-    settings.setPassword(getKey(encrypted));
-    return settings;
-  }
-
-  public abstract E newEncrypted();
-
   /**
    * Creates secret key for the encrypted value.  
    * 
@@ -152,10 +206,13 @@ public abstract class AbstractEncryptionService<E extends EncryptedJson> {
    */
   SecretKey createSecretKey( E encrypted ) throws EncryptionException {
     if( encrypted.getKeyDerivation() == EncryptedJson.KeyDerivation.PBKDF_2 ) {
-
-      CipherSettings settings = getCiperSettings(encrypted);
+    	char[] passphrase = passphraseLookup.apply(encrypted.getKeyName());
       try {
-        return stretchKey(settings.getPassword(), encrypted.getSalt(), settings.getIterationCount(), settings.getKeyLength());
+        return stretchKey(
+          passphrase,
+          encrypted.getSalt(),
+          encrypted.getIterations(),
+          encrypted.getKeyLength());
       } catch( Exception e ) {
         throw new EncryptionException("could not generate secret key", e);
       }
@@ -177,8 +234,6 @@ public abstract class AbstractEncryptionService<E extends EncryptedJson> {
    * @throws InvalidKeySpecException if the specification of the key is invalid.
    */
   static SecretKey stretchKey( char[] password, byte[] salt, int iterationCount, int keyLength ) throws NoSuchAlgorithmException, InvalidKeySpecException {
-    // TODO: Remove this after our data set before 3/18/2014 is removed.
-    if( keyLength == 32 ) keyLength *= 8;
     SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
     KeySpec spec = new PBEKeySpec(password, salt, iterationCount, keyLength);
     return factory.generateSecret(spec);
@@ -206,8 +261,10 @@ public abstract class AbstractEncryptionService<E extends EncryptedJson> {
       }
     }
     else {
-      throw new EncryptionException(String.format("unsupported cipher %s and key derivation %s", EncryptedJson.Cipher.AES_256_CBC,
-        EncryptedJson.KeyDerivation.PBKDF_2));
+      throw new EncryptionException(String.format(
+    	        "unsupported cipher %s and key derivation %s",
+    	        value.getCipher(),
+    	        value.getKeyDerivation()));
     }
   }
 
@@ -232,8 +289,10 @@ public abstract class AbstractEncryptionService<E extends EncryptedJson> {
       }
     }
     else {
-      throw new EncryptionException(String.format("unsupported cipher %s and key derivation %s", EncryptedJson.Cipher.AES_256_CBC,
-        EncryptedJson.KeyDerivation.PBKDF_2));
+      throw new EncryptionException(String.format(
+        "unsupported cipher %s and key derivation %s",
+        value.getCipher(),
+        value.getKeyDerivation()));
     }
   }
 
@@ -245,12 +304,12 @@ public abstract class AbstractEncryptionService<E extends EncryptedJson> {
    * @throws EncryptionException if the value could not be encrypted for any reason.
    */
   public E encrypt( byte[] data ) throws EncryptionException {
-    E result = newEncrypted();
-    result.setSalt(nextSalt());
+    E result = encryptedSupplier.get();
+    result.setSalt(saltSupplier.get());
     result.setCipher(com.meltmedia.jackson.crypto.EncryptedJson.Cipher.AES_256_CBC);
     result.setKeyDerivation(KeyDerivation.PBKDF_2);
-    result.setKeyLength(256);
-    result.setIterations(2000);
+    result.setKeyLength(keyLength);
+    result.setIterations(iterations);
     result.setEncrypted(true);
 
     SecretKey secret = createSecretKey(result);

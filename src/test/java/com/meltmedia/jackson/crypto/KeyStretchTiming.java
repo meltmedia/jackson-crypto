@@ -38,37 +38,37 @@ public class KeyStretchTiming {
   @Test
   @BenchmarkOptions(callgc = false, benchmarkRounds = 20, warmupRounds = 3)
   public void timeKeyStretch10000() throws NoSuchAlgorithmException, InvalidKeySpecException {
-    AbstractEncryptionService.stretchKey(password, salt, 10000, keyLength);
+    EncryptionService.stretchKey(password, salt, 10000, keyLength);
   }
 
   @Test
   @BenchmarkOptions(callgc = false, benchmarkRounds = 20, warmupRounds = 3)
   public void timeKeyStretch20000() throws NoSuchAlgorithmException, InvalidKeySpecException {
-    AbstractEncryptionService.stretchKey(password, salt, 20000, keyLength);
+    EncryptionService.stretchKey(password, salt, 20000, keyLength);
   }
 
   @Test
   @BenchmarkOptions(callgc = false, benchmarkRounds = 20, warmupRounds = 3)
   public void timeKeyStretch40000() throws NoSuchAlgorithmException, InvalidKeySpecException {
-    AbstractEncryptionService.stretchKey(password, salt, 40000, keyLength);
+    EncryptionService.stretchKey(password, salt, 40000, keyLength);
   }
 
   @Test
   @BenchmarkOptions(callgc = false, benchmarkRounds = 20, warmupRounds = 3)
   public void timeKeyStretch80000() throws NoSuchAlgorithmException, InvalidKeySpecException {
-    AbstractEncryptionService.stretchKey(password, salt, 80000, keyLength);
+    EncryptionService.stretchKey(password, salt, 80000, keyLength);
   }
 
   @Test
   @BenchmarkOptions(callgc = false, benchmarkRounds = 20, warmupRounds = 3)
   public void timeKeyStretch160000() throws NoSuchAlgorithmException, InvalidKeySpecException {
-    AbstractEncryptionService.stretchKey(password, salt, 160000, keyLength);
+    EncryptionService.stretchKey(password, salt, 160000, keyLength);
   }
 
   @Test
   @BenchmarkOptions(callgc = false, benchmarkRounds = 20, warmupRounds = 3)
   public void timeKeyStretch64000() throws NoSuchAlgorithmException, InvalidKeySpecException {
-    AbstractEncryptionService.stretchKey(password, salt, 64000, keyLength);
+    EncryptionService.stretchKey(password, salt, 64000, keyLength);
   }
 
 }

@@ -22,21 +22,20 @@ public class DynamicEncryptionServiceTest {
   public static String SALT_FROM_NODE = "LhrWBg==";
   public static String VALUE_FROM_NODE = "p5lQp8jLM3Xt6pGL2s/YpPC+Xr28FJQl07Qh30qtDIE=";
   public static String DECRYPTED_FROM_NODE = "This is my text!";
-  DynamicEncryptionService cipher;
+  EncryptionService<EncryptedJson> cipher;
   Base64 base64 = new Base64();
 
   @Before
   public void setUp() throws UnsupportedEncodingException {
     DynamicEncryptionConfiguration config = new DynamicEncryptionConfiguration();
-    CipherSettings settings = new CipherSettings();
-    settings.setKeyLength(256);
-    settings.setIterationCount(2000);
-    settings.setPassword("password".toCharArray());
 
     config.getKeys().put("default", "password".toCharArray());
     config.setCurrentKey("default");
 
-    cipher = new DynamicEncryptionService(config);
+    cipher = new EncryptionService.Builder<EncryptedJson>()
+    		.withPassphraseLookup(config.passphraseFunction())
+    		.withEncryptedJsonSupplier(config.encryptedJsonSupplier())
+    		.build();
   }
 
   @Test
