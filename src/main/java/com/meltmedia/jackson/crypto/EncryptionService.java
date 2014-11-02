@@ -22,13 +22,11 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
 import javax.validation.Validator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.ValidationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.meltmedia.jackson.crypto.EncryptedJson.KeyDerivation;
@@ -206,7 +204,7 @@ public class EncryptionService<E extends EncryptedJson> {
    */
   SecretKey createSecretKey( E encrypted ) throws EncryptionException {
     if( encrypted.getKeyDerivation() == EncryptedJson.KeyDerivation.PBKDF_2 ) {
-    	char[] passphrase = passphraseLookup.apply(encrypted.getKeyName());
+      char[] passphrase = passphraseLookup.apply(encrypted.getKeyName());
       try {
         return stretchKey(
           passphrase,
