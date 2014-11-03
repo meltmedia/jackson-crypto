@@ -39,8 +39,20 @@ public class CryptoModule extends Module {
 
   @Override
   public Version version() {
-    // TODO: add version information from classpath.
-    return Version.unknownVersion();
+    String[] versionInfo = MavenProperties.VERSION.split("[\\.-]", 4);
+    if( versionInfo.length < 3 ) {
+      return Version.unknownVersion();
+    }
+    try {
+      int major = Integer.valueOf(versionInfo[0]);
+      int minor = Integer.valueOf(versionInfo[1]);
+      int patch = Integer.valueOf(versionInfo[2]);
+      String snapshotInfo = versionInfo.length == 3 ? null : versionInfo[3];
+      return new Version(major, minor, patch, snapshotInfo, MavenProperties.GROUP_ID, MavenProperties.ARTIFACT_ID);
+    }
+    catch( Exception e ) {
+      return Version.unknownVersion();
+    }
   }
 
 }
