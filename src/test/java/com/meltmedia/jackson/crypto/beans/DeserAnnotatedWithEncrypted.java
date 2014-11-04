@@ -6,12 +6,12 @@ import com.meltmedia.jackson.crypto.Encrypted;
 
 public class DeserAnnotatedWithEncrypted extends ReflectiveObject {
   @JsonProperty
-  @JsonDeserialize(using=Base64Deserializer.class)
+  @JsonDeserialize(using = Base64Deserializer.class)
   @Encrypted
   public String value;
-  
-  public DeserAnnotatedWithEncrypted withValue( String value ) {
-	  this.value = value;
-	  return this;
+
+  public DeserAnnotatedWithEncrypted withValue(String value) {
+    this.value = value;
+    return this;
   }
 }

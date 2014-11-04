@@ -21,7 +21,7 @@ public class DynamicEncryptionConfiguration {
     return currentKey;
   }
 
-  public void setCurrentKey( String currentCipher ) {
+  public void setCurrentKey(String currentCipher) {
     this.currentKey = currentCipher;
   }
 
@@ -29,34 +29,34 @@ public class DynamicEncryptionConfiguration {
     return keys;
   }
 
-  public void setKeys( Map<String, char[]> keys ) {
+  public void setKeys(Map<String, char[]> keys) {
     this.keys = keys;
   }
-  
+
   public Supplier<EncryptedJson> encryptedJsonSupplier() {
-	  return new Supplier<EncryptedJson>() {
+    return new Supplier<EncryptedJson>() {
 
-		@Override
-		public EncryptedJson get() {
-			    EncryptedJson data = new EncryptedJson();
-			    data.setKeyName(currentKey);
-			    return data;
-			  }
-	  };
+      @Override
+      public EncryptedJson get() {
+        EncryptedJson data = new EncryptedJson();
+        data.setKeyName(currentKey);
+        return data;
+      }
+    };
   }
-  
+
   public Function<String, char[]> passphraseFunction() {
-	  return new Function<String, char[]>() {
+    return new Function<String, char[]>() {
 
-		@Override
-		public char[] apply(String keyName) {
-			  if( !keys.containsKey(keyName)) {
-				  throw new EncryptionException(String.format("encryption key %s not defined", keyName));
-			  }
-		    return keys.get(keyName);
+      @Override
+      public char[] apply(String keyName) {
+        if (!keys.containsKey(keyName)) {
+          throw new EncryptionException(String.format("encryption key %s not defined", keyName));
+        }
+        return keys.get(keyName);
 
-		}
-		  
-	  };
+      }
+
+    };
   }
 }
