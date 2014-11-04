@@ -1,8 +1,23 @@
+/**
+ * Copyright (C) 2014 meltmedia (christian.trimble@meltmedia.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.meltmedia.jackson.crypto;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import java.io.UnsupportedEncodingException;
@@ -32,14 +47,15 @@ public class DynamicEncryptionServiceTest {
     config.getKeys().put("default", "password".toCharArray());
     config.setCurrentKey("default");
 
-    cipher = new EncryptionService.Builder<EncryptedJson>()
-    		.withPassphraseLookup(config.passphraseFunction())
-    		.withEncryptedJsonSupplier(config.encryptedJsonSupplier())
-    		.build();
+    cipher =
+        new EncryptionService.Builder<EncryptedJson>()
+            .withPassphraseLookup(config.passphraseFunction())
+            .withEncryptedJsonSupplier(config.encryptedJsonSupplier()).build();
   }
 
   @Test
-  public void shouldDecryptValueFromNodeCipher() throws EncryptionException, UnsupportedEncodingException {
+  public void shouldDecryptValueFromNodeCipher() throws EncryptionException,
+      UnsupportedEncodingException {
     EncryptedJson value = new EncryptedJson();
     value.setKeyName("default");
     value.setIv(base64.decode(IV_FROM_NODE));
@@ -56,7 +72,8 @@ public class DynamicEncryptionServiceTest {
   }
 
   @Test
-  public void shouldSerializeInBase64() throws EncryptionException, UnsupportedEncodingException, JsonProcessingException {
+  public void shouldSerializeInBase64() throws EncryptionException, UnsupportedEncodingException,
+      JsonProcessingException {
     EncryptedJson value = new EncryptedJson();
     value.setKeyName("default");
     value.setIv(base64.decode(IV_FROM_NODE));
@@ -76,13 +93,15 @@ public class DynamicEncryptionServiceTest {
   }
 
   @Test
-  public void shouldDecryptEncryptedValues() throws EncryptionException, UnsupportedEncodingException {
+  public void shouldDecryptEncryptedValues() throws EncryptionException,
+      UnsupportedEncodingException {
     EncryptedJson value = cipher.encrypt(DECRYPTED_FROM_NODE, "UTF-8");
     String decrypted = cipher.decrypt(value, "UTF-8");
 
-    assertThat("a value encrypted with the cipher can be decrypted", decrypted, equalTo(DECRYPTED_FROM_NODE));
+    assertThat("a value encrypted with the cipher can be decrypted", decrypted,
+        equalTo(DECRYPTED_FROM_NODE));
   }
-  
+
   @Test
   public void shouldFailIfNoKeyNameSpecified() throws UnsupportedEncodingException {
     EncryptedJson value = new EncryptedJson();
@@ -98,11 +117,10 @@ public class DynamicEncryptionServiceTest {
     try {
       cipher.decrypt(value, "UTF-8");
       fail("Missing key name did not cause exception.");
-    }
-    catch( EncryptionException ee ) {
-      assertThat("the property is identified in message", ee.getMessage(), containsString("undefined"));
+    } catch (EncryptionException ee) {
+      assertThat("the property is identified in message", ee.getMessage(),
+          containsString("undefined"));
     }
   }
-  
 
 }

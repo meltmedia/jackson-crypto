@@ -1,36 +1,105 @@
+/**
+ * Copyright (C) 2014 meltmedia (christian.trimble@meltmedia.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.meltmedia.jackson.crypto;
 
 import java.io.IOException;
+import java.util.Iterator;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.BeanProperty;
+import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerBuilder;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
+import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
+import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
 
-/**
- * Deserializer for encrypted configuration blocks.
- * 
- * @author Christian Trimble
- */
-@SuppressWarnings("serial")
-public class EncryptedJsonDeserializer extends TransformingDeserializer<EncryptedJson>
-{
-  public EncryptedJsonDeserializer() {
-    super(EncryptedJson.class);
+public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
+    implements ContextualDeserializer {
+
+  private EncryptionService<EncryptedJson> service;
+  private JsonDeserializer<Object> baseDeser;
+  private Encrypted annotation;
+  private BeanProperty property;
+
+  public EncryptedJsonDeserializer(EncryptionService<EncryptedJson> service, Encrypted annotation,
+      JsonDeserializer<Object> baseDeser) {
+    this.service = service;
+    this.annotation = annotation;
+    this.baseDeser = baseDeser;
   }
 
-  public EncryptedJsonDeserializer( BeanProperty property ) {
-    super(EncryptedJson.class, property);
+  public EncryptedJsonDeserializer(EncryptionService<EncryptedJson> service, Encrypted encrypt,
+      JsonDeserializer<Object> wrapped, BeanProperty property) {
+    this.service = service;
+    this.annotation = encrypt;
+    this.baseDeser = wrapped;
+    this.property = property;
   }
 
   @Override
-  protected Object transform( EncryptedJson intermediate, ObjectMapper mapper, DeserializationContext ctxt ) throws IOException,
-    JsonProcessingException {
-    try {
-      String value = EnvironmentEncryptionService.getCipher().decrypt(intermediate, "UTF-8");
-      return mapper.readValue(value, targetType);
-    } catch( EncryptionException e ) {
-      throw new IOException(String.format("could not decrypt value %s::%s", property.getMember().getDeclaringClass().getSimpleName(), property.getName()), e);
+  public Object deserialize(JsonParser parser, DeserializationContext context) throws IOException,
+      JsonProcessingException {
+    EncryptedJson encrypted = parser.readValueAs(EncryptedJson.class);
+    String decrypted = service.decrypt(encrypted, annotation.encoding());
+    JsonParser decryptedParser = parser.getCodec().getFactory().createParser(decrypted);
+    if (baseDeser == null) {
+      return parser.getCodec().readValue(decryptedParser, property.getType());
+    } else {
+      if (baseDeser instanceof ContextualDeserializer) {
+        return ((ContextualDeserializer) baseDeser).createContextual(context, property)
+            .deserialize(decryptedParser, context);
+      }
+      return baseDeser.deserialize(decryptedParser, context);
     }
+  }
+
+  @Override
+  public JsonDeserializer<?> createContextual(DeserializationContext context, BeanProperty property)
+      throws JsonMappingException {
+    return new EncryptedJsonDeserializer(service, annotation, baseDeser, property);
+  }
+
+  public static class Modifier extends BeanDeserializerModifier {
+    private EncryptionService<EncryptedJson> service;
+
+    public Modifier(EncryptionService<EncryptedJson> service) {
+      this.service = service;
+    }
+
+    @Override
+    public BeanDeserializerBuilder updateBuilder(DeserializationConfig config,
+        BeanDescription beanDesc, BeanDeserializerBuilder builder) {
+      Iterator<SettableBeanProperty> beanPropertyIterator = builder.getProperties();
+      while (beanPropertyIterator.hasNext()) {
+        SettableBeanProperty settableBeanProperty = beanPropertyIterator.next();
+        Encrypted encrypted = settableBeanProperty.getAnnotation(Encrypted.class);
+        if (encrypted != null) {
+          JsonDeserializer<Object> current = settableBeanProperty.getValueDeserializer();
+          builder.addOrReplaceProperty(settableBeanProperty
+              .withValueDeserializer(new EncryptedJsonDeserializer(service, encrypted, current)),
+              true);
+        }
+      }
+      return builder;
+    }
+
   }
 }
