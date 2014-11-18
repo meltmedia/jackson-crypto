@@ -21,7 +21,7 @@ Then create a new CryptoModule and register it with your ObjectMapper.
 ```
 EncryptionService service = ...;
 ObjectMapper mapper = ...;
-mapper.registerModule(new CryptoModule(service));
+mapper.registerModule(new CryptoModule().withSource(service));
 ```
 
 Once this is done, you can use the `@Encrypted` annotation on your `@JsonProperty` annotated methods to encrypt them during serialization and
