@@ -394,4 +394,8 @@ public class EncryptionService<E extends EncryptedJson> {
       throw new EncryptionException("could not decrypt value", e);
     }
   }
+
+  public String getName() {
+    return name;
+  }
 }

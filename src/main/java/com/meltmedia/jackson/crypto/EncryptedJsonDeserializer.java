@@ -85,8 +85,8 @@ public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
     public Modifier() {
     }
     
-    public Modifier withSource( String name, EncryptionService<EncryptedJson> source ) {
-      sourceMap.put(name, source);
+    public Modifier withSource( EncryptionService<EncryptedJson> source ) {
+      sourceMap.put(source.getName(), source);
       return this;
     }
 

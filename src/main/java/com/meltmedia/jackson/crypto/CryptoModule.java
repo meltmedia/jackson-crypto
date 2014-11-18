@@ -39,9 +39,9 @@ public class CryptoModule extends Module {
     context.addBeanDeserializerModifier(deserModifier);
   }
   
-  public CryptoModule withSource( String name, EncryptionService<EncryptedJson> service ) {
-    this.serModifier.withSource(name, service);
-    this.deserModifier.withSource(name, service);
+  public CryptoModule withSource( EncryptionService<EncryptedJson> service ) {
+    this.serModifier.withSource(service);
+    this.deserModifier.withSource(service);
     return this;
   }
 
