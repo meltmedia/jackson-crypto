@@ -49,7 +49,9 @@ public class Functions {
 
       @Override
       public char[] apply(String domain) {
-        return System.getenv(envVar).toCharArray();
+        char[] key = System.getenv(envVar).toCharArray();
+        if( key == null ) throw new EncryptionException(String.format("No key defined in environment variable %s", domain));
+        return key;
       }
     };
   }
