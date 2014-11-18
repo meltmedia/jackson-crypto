@@ -92,6 +92,7 @@ public class EncryptionService<E extends EncryptedJson> {
     Supplier<byte[]> saltSupplier;
     int iterations = Defaults.KEY_STRETCH_ITERATIONS;
     int keyLength = Defaults.KEY_LENGTH;
+    String name = Defaults.DEFAULT_NAME;
 
     public Builder<E> withObjectMapper(ObjectMapper mapper) {
       this.mapper = mapper;
@@ -127,6 +128,11 @@ public class EncryptionService<E extends EncryptedJson> {
       this.keyLength = keyLength;
       return this;
     }
+    
+    public Builder<E> withName( String name ) {
+      this.name = name;
+      return this;
+    }
 
     public EncryptionService<E> build() {
       Supplier<byte[]> buildSaltSupplier =
@@ -137,7 +143,7 @@ public class EncryptionService<E extends EncryptedJson> {
       if (passphraseLookup == null) {
         throw new IllegalArgumentException("the key lookup function is required.");
       }
-      return new EncryptionService<E>(Defaults.defaultObjectMapper(mapper),
+      return new EncryptionService<E>(name, Defaults.defaultObjectMapper(mapper),
           Defaults.defaultValidator(validator), buildSaltSupplier, encryptedSupplier,
           passphraseLookup, iterations, keyLength);
     }
@@ -163,10 +169,12 @@ public class EncryptionService<E extends EncryptedJson> {
   Validator validator;
   int iterations;
   int keyLength;
+  String name;
 
-  public EncryptionService(ObjectMapper mapper, Validator validator, Supplier<byte[]> saltSupplier,
+  public EncryptionService(String name, ObjectMapper mapper, Validator validator, Supplier<byte[]> saltSupplier,
       Supplier<E> encryptedSupplier, Function<String, char[]> passphraseLookup, int iterations,
       int keyLength) {
+    this.name = name;
     this.mapper = mapper;
     this.validator = validator;
     this.encryptedSupplier = encryptedSupplier;

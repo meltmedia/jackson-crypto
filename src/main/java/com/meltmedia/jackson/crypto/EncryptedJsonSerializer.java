@@ -18,7 +18,9 @@ package com.meltmedia.jackson.crypto;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -60,13 +62,16 @@ public class EncryptedJsonSerializer extends JsonSerializer<Object> {
   }
 
   public static class Modifier extends BeanSerializerModifier {
+    private Map<String, EncryptionService<EncryptedJson>> sourceMap = new LinkedHashMap<>();
 
-    EncryptionService<EncryptedJson> service;
-
-    public Modifier(EncryptionService<EncryptedJson> service) {
-      this.service = service;
+    public Modifier() {
     }
 
+    public Modifier withSource( String name, EncryptionService<EncryptedJson> source ) {
+      sourceMap.put(name, source);
+      return this;
+    }
+    
     // we do not need to override this.
     @Override
     public List<BeanPropertyWriter> changeProperties(SerializationConfig config,
@@ -77,6 +82,12 @@ public class EncryptedJsonSerializer extends JsonSerializer<Object> {
         if (encrypted == null) {
           newWriters.add(writer);
           continue;
+        }
+
+        String source = encrypted.source();
+        EncryptionService<EncryptedJson> service = sourceMap.get(source);
+        if( service == null ) {
+          throw new IllegalArgumentException(String.format("No encryption key source defined for %s.", source));
         }
 
         JsonSerializer<Object> currentSer = writer.getSerializer();

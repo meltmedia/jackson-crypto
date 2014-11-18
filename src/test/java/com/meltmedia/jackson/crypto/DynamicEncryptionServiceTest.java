@@ -21,6 +21,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.fail;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Before;
@@ -42,15 +44,14 @@ public class DynamicEncryptionServiceTest {
 
   @Before
   public void setUp() throws UnsupportedEncodingException {
-    DynamicEncryptionConfiguration config = new DynamicEncryptionConfiguration();
 
-    config.getKeys().put("default", "password".toCharArray());
-    config.setCurrentKey("default");
+    Map<String, char[]> keys = new HashMap<>();
+    keys.put("default", "password".toCharArray());
 
-    cipher =
-        new EncryptionService.Builder<EncryptedJson>()
-            .withPassphraseLookup(config.passphraseFunction())
-            .withEncryptedJsonSupplier(config.encryptedJsonSupplier()).build();
+    cipher = new EncryptionService.Builder<EncryptedJson>()
+            .withPassphraseLookup(Functions.passphraseFunction(keys))
+            .withEncryptedJsonSupplier(Functions.encryptedJsonSupplier("default"))
+            .build();
   }
 
   @Test

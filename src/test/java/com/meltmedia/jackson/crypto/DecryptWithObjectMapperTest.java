@@ -43,18 +43,16 @@ public class DecryptWithObjectMapperTest {
     Map<String, char[]> keys = new HashMap<String, char[]>();
     keys.put("current", "current secret".toCharArray());
     keys.put("old", "old secret".toCharArray());
-    DynamicEncryptionConfiguration config = new DynamicEncryptionConfiguration();
-    config.setCurrentKey("current");
-    config.setKeys(keys);
 
     mapper = new ObjectMapper();
 
-    service =
-        EncryptionService.builder().withPassphraseLookup(config.passphraseFunction())
-            .withEncryptedJsonSupplier(config.encryptedJsonSupplier()).withObjectMapper(mapper)
+    service = EncryptionService.builder()
+          .withPassphraseLookup(Functions.passphraseFunction(keys))
+          .withEncryptedJsonSupplier(Functions.encryptedJsonSupplier("current"))
+          .withObjectMapper(mapper)
             .build();
 
-    mapper.registerModule(new CryptoModule(service));
+    mapper.registerModule(new CryptoModule().withSource(Defaults.DEFAULT_NAME, service));
   }
 
   @Test

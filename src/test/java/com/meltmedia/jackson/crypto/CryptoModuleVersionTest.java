@@ -31,7 +31,7 @@ public class CryptoModuleVersionTest {
   public void setUp() {
     @SuppressWarnings("unchecked")
     EncryptionService<EncryptedJson> service = mock(EncryptionService.class);
-    CryptoModule module = new CryptoModule(service);
+    CryptoModule module = new CryptoModule().withSource(Defaults.DEFAULT_NAME, service);
     version = module.version();
   }
 

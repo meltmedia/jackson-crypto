@@ -24,6 +24,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Defaults {
   public static final int KEY_LENGTH = 256;
   public static final int KEY_STRETCH_ITERATIONS = 2000;
+  public static final int SALT_LENGTH = 4;
+  public static final String DEFAULT_NAME = "default";
+  public static final String DEFAULT_ENCODING = "UTF-8";
 
   /**
    * Creates a default validator, if the supplied validator is null.

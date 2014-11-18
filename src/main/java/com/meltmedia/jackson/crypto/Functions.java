@@ -15,63 +15,53 @@
  */
 package com.meltmedia.jackson.crypto;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.meltmedia.jackson.crypto.EncryptionService.Function;
 import com.meltmedia.jackson.crypto.EncryptionService.Supplier;
 
 /**
- * A configuration block for the DataEncryptionService.  This block should
- * be encrypted on disk and decrypted as it is read into memory.
- * 
  * @author Christian Trimble
  *
  */
-public class DynamicEncryptionConfiguration {
-  protected String currentKey;
-  protected Map<String, char[]> keys = new LinkedHashMap<>();
+public class Functions {
 
-  public String getCurrentKey() {
-    return currentKey;
-  }
-
-  public void setCurrentKey(String currentCipher) {
-    this.currentKey = currentCipher;
-  }
-
-  public Map<String, char[]> getKeys() {
-    return keys;
-  }
-
-  public void setKeys(Map<String, char[]> keys) {
-    this.keys = keys;
-  }
-
-  public Supplier<EncryptedJson> encryptedJsonSupplier() {
+  public static Supplier<EncryptedJson> encryptedJsonSupplier() {
     return new Supplier<EncryptedJson>() {
-
       @Override
       public EncryptedJson get() {
-        EncryptedJson data = new EncryptedJson();
-        data.setKeyName(currentKey);
-        return data;
+        return new EncryptedJson();
+      }
+    };
+  }
+  
+  public static Supplier<EncryptedJson> encryptedJsonSupplier(final String keyName) {
+    return new Supplier<EncryptedJson>() {
+      @Override
+      public EncryptedJson get() {
+        return new EncryptedJson().withKeyName(keyName);
       }
     };
   }
 
-  public Function<String, char[]> passphraseFunction() {
+  public static Function<String, char[]> passphraseFunction(final String envVar) {
     return new Function<String, char[]>() {
 
       @Override
-      public char[] apply(String keyName) {
-        if (!keys.containsKey(keyName)) {
-          throw new EncryptionException(String.format("encryption key %s not defined", keyName));
-        }
-        return keys.get(keyName);
-
+      public char[] apply(String domain) {
+        return System.getenv(envVar).toCharArray();
       }
-
     };
+  }
+  
+  public static Function<String, char[]> passphraseFunction(final Map<String, char[]> keys) {
+    return new Function<String, char[]>() {
+      @Override
+      public char[] apply(String domain) {
+        char[] key = keys.get(domain);
+        if( key == null ) throw new EncryptionException(String.format("No key defined for name %s", domain));
+        return key;
+      }
+    };    
   }
 }

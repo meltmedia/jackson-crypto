@@ -20,10 +20,12 @@ import com.fasterxml.jackson.databind.Module;
 
 public class CryptoModule extends Module {
 
-  EncryptionService<EncryptedJson> service;
+  EncryptedJsonSerializer.Modifier serModifier;
+  EncryptedJsonDeserializer.Modifier deserModifier;
 
-  public CryptoModule(EncryptionService<EncryptedJson> service) {
-    this.service = service;
+  public CryptoModule() {
+    this.serModifier = new EncryptedJsonSerializer.Modifier();
+    this.deserModifier = new EncryptedJsonDeserializer.Modifier();
   }
 
   @Override
@@ -33,8 +35,14 @@ public class CryptoModule extends Module {
 
   @Override
   public void setupModule(SetupContext context) {
-    context.addBeanSerializerModifier(new EncryptedJsonSerializer.Modifier(service));
-    context.addBeanDeserializerModifier(new EncryptedJsonDeserializer.Modifier(service));
+    context.addBeanSerializerModifier(serModifier);
+    context.addBeanDeserializerModifier(deserModifier);
+  }
+  
+  public CryptoModule withSource( String name, EncryptionService<EncryptedJson> service ) {
+    this.serModifier.withSource(name, service);
+    this.deserModifier.withSource(name, service);
+    return this;
   }
 
   @Override

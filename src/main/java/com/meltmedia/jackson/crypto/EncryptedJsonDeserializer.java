@@ -17,6 +17,8 @@ package com.meltmedia.jackson.crypto;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -78,10 +80,14 @@ public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
   }
 
   public static class Modifier extends BeanDeserializerModifier {
-    private EncryptionService<EncryptedJson> service;
+    private Map<String, EncryptionService<EncryptedJson>> sourceMap = new LinkedHashMap<>();
 
-    public Modifier(EncryptionService<EncryptedJson> service) {
-      this.service = service;
+    public Modifier() {
+    }
+    
+    public Modifier withSource( String name, EncryptionService<EncryptedJson> source ) {
+      sourceMap.put(name, source);
+      return this;
     }
 
     @Override
@@ -91,12 +97,16 @@ public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
       while (beanPropertyIterator.hasNext()) {
         SettableBeanProperty settableBeanProperty = beanPropertyIterator.next();
         Encrypted encrypted = settableBeanProperty.getAnnotation(Encrypted.class);
-        if (encrypted != null) {
-          JsonDeserializer<Object> current = settableBeanProperty.getValueDeserializer();
-          builder.addOrReplaceProperty(settableBeanProperty
-              .withValueDeserializer(new EncryptedJsonDeserializer(service, encrypted, current)),
-              true);
+        if( encrypted == null ) continue;
+        
+        String source = encrypted.source();
+        EncryptionService<EncryptedJson> service = sourceMap.get(source);
+        if( service == null ) {
+          throw new IllegalArgumentException(String.format("No encryption key source defined for %s.", source));
         }
+        JsonDeserializer<Object> current = settableBeanProperty.getValueDeserializer();
+        builder.addOrReplaceProperty(settableBeanProperty
+          .withValueDeserializer(new EncryptedJsonDeserializer(service, encrypted, current)), true);
       }
       return builder;
     }
