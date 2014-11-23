@@ -26,7 +26,7 @@ import com.meltmedia.jackson.crypto.EncryptionService.Supplier;
  * @author Christian Trimble
  */
 public class Salts {
-  private static final Random random = new SecureRandom();
+  private static final Random defaultRandom = new SecureRandom();
 
   /**
    * Constructs a new salt supplier with the specified random and salt length.
@@ -53,10 +53,10 @@ public class Salts {
    * @return the default salt supplier.
    */
   public static Supplier<byte[]> saltSupplier() {
-    return saltSupplier(random, Defaults.SALT_LENGTH);
+    return saltSupplier(defaultRandom, Defaults.SALT_LENGTH);
   }
   
   public static Supplier<byte[]> saltSupplier( final int length ) {
-    return saltSupplier(random, length);
+    return saltSupplier(defaultRandom, length);
   }
 }

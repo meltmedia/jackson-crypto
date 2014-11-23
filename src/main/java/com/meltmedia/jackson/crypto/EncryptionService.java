@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.meltmedia.jackson.crypto.EncryptedJson.KeyDerivation;
 
@@ -352,6 +353,15 @@ public class EncryptionService<E extends EncryptedJson> {
       EncryptionException {
     return encrypt(text.getBytes(encoding));
   }
+  
+  public <T> E encryptValue( T node, String encoding ) throws UnsupportedEncodingException,
+  EncryptionException {
+    try {
+      return encrypt(mapper.writeValueAsString(node), encoding);
+    } catch (JsonProcessingException e) {
+      throw new EncryptionException("could not serialize node", e);
+    }
+  }
 
   /**
    * Decrypts the encrypted value.
@@ -389,6 +399,7 @@ public class EncryptionService<E extends EncryptedJson> {
 
   public <T> T decryptAs(E secret, String encoding, Class<T> type) throws EncryptionException {
     try {
+      String decrypted = decrypt(secret, encoding);
       return mapper.readValue(decrypt(secret, encoding), type);
     } catch (IOException e) {
       throw new EncryptionException("could not decrypt value", e);

@@ -56,6 +56,18 @@ public class Functions {
     };
   }
   
+  public static Function<String, char[]> constPassphraseFunction(final String passphrase) {
+    return new Function<String, char[]>() {
+      @Override
+      public char[] apply(String domain) {
+        if( domain != null ) {
+          throw new EncryptionException("const passphrase does not support named keys.");
+        }
+        return passphrase.toCharArray();
+      }
+    };
+  }
+  
   public static Function<String, char[]> passphraseFunction(final Map<String, char[]> keys) {
     return new Function<String, char[]>() {
       @Override
