@@ -138,4 +138,5 @@ public class EncryptWithObjectMapperTest {
     assertThat(roundTrip.asText(), equalTo("c29tZSB2YWx1ZQ=="));
 
   }
+
 }

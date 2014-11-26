@@ -26,7 +26,7 @@ import com.meltmedia.jackson.crypto.Encrypted;
 public class WithEncrypted {
   @Encrypted
   @JsonProperty
-  String stringValue;
+  public String stringValue;
   @Encrypted
   @JsonProperty
   int intValue;

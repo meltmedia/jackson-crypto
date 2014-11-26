@@ -27,11 +27,13 @@
     },
     "cipher": {
       "type": "string",
+      "javaType": "java.lang.String",
       "enum": ["aes-256-cbc"],
       "description": "The cipher used to encrypt this value."
     },
     "keyDerivation": {
       "type": "string",
+      "javaType": "java.lang.String",
       "enum": ["pbkdf2"],
       "description": "The key derivation function."
     },

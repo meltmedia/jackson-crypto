@@ -28,7 +28,9 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TreeTraversingParser;
 import com.meltmedia.jackson.crypto.beans.DeserAnnotatedWithEncrypted;
 import com.meltmedia.jackson.crypto.beans.SerAnnotatedWithEncrypted;
 import com.meltmedia.jackson.crypto.beans.WithEncrypted;
@@ -77,6 +79,15 @@ public class DecryptWithObjectMapperTest {
 
     assertThat(roundTrip.value, equalTo("some value"));
 
+  }
+  
+  @Test
+  public void shouldDecryptWithoutObjectCodec() throws IOException {
+    WithEncrypted withEncrypted = new WithEncrypted().withStringValue("some secret");
+
+    JsonNode node = mapper.convertValue(withEncrypted, JsonNode.class);
+    
+    WithEncrypted result = mapper.copy().readValue(new TreeTraversingParser(node), WithEncrypted.class);
   }
 
 }

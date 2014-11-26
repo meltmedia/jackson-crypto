@@ -30,8 +30,6 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.meltmedia.jackson.crypto.EncryptedJson.Cipher;
-import com.meltmedia.jackson.crypto.EncryptedJson.KeyDerivation;
 
 public class DynamicEncryptionServiceTest {
 
@@ -64,8 +62,8 @@ public class DynamicEncryptionServiceTest {
     value.setValue(base64.decode(VALUE_FROM_NODE));
     value.setIterations(2000);
     value.setKeyLength(256);
-    value.setCipher(Cipher.AES_256_CBC);
-    value.setKeyDerivation(KeyDerivation.PBKDF_2);
+    value.setCipher(Ciphers.AES_256_CBC);
+    value.setKeyDerivation(KeyDerivations.PBKDF2);
 
     String result = cipher.decrypt(value, "UTF-8");
 
@@ -82,8 +80,8 @@ public class DynamicEncryptionServiceTest {
     value.setValue(base64.decode(VALUE_FROM_NODE));
     value.setIterations(2000);
     value.setKeyLength(256);
-    value.setCipher(Cipher.AES_256_CBC);
-    value.setKeyDerivation(KeyDerivation.PBKDF_2);
+    value.setCipher(Ciphers.AES_256_CBC);
+    value.setKeyDerivation(KeyDerivations.PBKDF2);
 
     ObjectMapper mapper = new ObjectMapper();
     String serialized = mapper.writeValueAsString(value);
@@ -111,8 +109,8 @@ public class DynamicEncryptionServiceTest {
     value.setValue(base64.decode(VALUE_FROM_NODE));
     value.setIterations(2000);
     value.setKeyLength(256);
-    value.setCipher(Cipher.AES_256_CBC);
-    value.setKeyDerivation(KeyDerivation.PBKDF_2);
+    value.setCipher(Ciphers.AES_256_CBC);
+    value.setKeyDerivation(KeyDerivations.PBKDF2);
     value.setKeyName("undefined");
 
     try {

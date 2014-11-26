@@ -22,6 +22,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.DeserializationConfig;
@@ -40,6 +41,7 @@ public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
   private JsonDeserializer<Object> baseDeser;
   private Encrypted annotation;
   private BeanProperty property;
+  private ObjectCodec valueParser;
 
   public EncryptedJsonDeserializer(EncryptionService<EncryptedJson> service, Encrypted annotation,
       JsonDeserializer<Object> baseDeser) {
@@ -59,18 +61,11 @@ public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
   @Override
   public Object deserialize(JsonParser parser, DeserializationContext context) throws IOException,
       JsonProcessingException {
-    EncryptedJson encrypted = parser.readValueAs(EncryptedJson.class);
-    String decrypted = service.decrypt(encrypted, annotation.encoding());
-    JsonParser decryptedParser = parser.getCodec().getFactory().createParser(decrypted);
-    if (baseDeser == null) {
-      return parser.getCodec().readValue(decryptedParser, property.getType());
-    } else {
-      if (baseDeser instanceof ContextualDeserializer) {
-        return ((ContextualDeserializer) baseDeser).createContextual(context, property)
-            .deserialize(decryptedParser, context);
-      }
-      return baseDeser.deserialize(decryptedParser, context);
+    JsonDeserializer<?> deser = baseDeser;
+    if (deser instanceof ContextualDeserializer) {
+      deser = ((ContextualDeserializer) deser).createContextual(context, property);
     }
+    return service.decrypt(parser, deser, context, property.getType());
   }
 
   @Override
