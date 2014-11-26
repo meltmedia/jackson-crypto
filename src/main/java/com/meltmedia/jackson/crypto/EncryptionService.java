@@ -42,20 +42,26 @@ import javax.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.meltmedia.jackson.crypto.EncryptedJson.KeyDerivation;
 
 /**
  * A base class for encryption service implementations.
  * 
  * ## Keys
- *   The keys in this implementation are created using PBKDF2WithHmacSHA1 key stretching.  Options for the stretch iterations and key length
- *   can be specified.
+ * 
+ * The keys in this implementation are created using PBKDF2WithHmacSHA1 key stretching.  Options for the stretch iterations and key length
+ * can be specified.
  *   
  * ## Cipher
- *   The ciphers used by this implementation are created using AES/CBC/PKCS5Padding.
+ * 
+ * The ciphers used by this implementation are created using AES/CBC/PKCS5Padding.
  *   
  * ## General Settings
  * 
@@ -171,6 +177,7 @@ public class EncryptionService<E extends EncryptedJson> {
   int iterations;
   int keyLength;
   String name;
+  Class<E> encryptedType = (Class<E>)EncryptedJson.class;
 
   public EncryptionService(String name, ObjectMapper mapper, Validator validator, Supplier<byte[]> saltSupplier,
       Supplier<E> encryptedSupplier, Function<String, char[]> passphraseLookup, int iterations,
@@ -224,7 +231,7 @@ public class EncryptionService<E extends EncryptedJson> {
    * @throws EncryptionException
    */
   SecretKey createSecretKey(E encrypted) throws EncryptionException {
-    if (encrypted.getKeyDerivation() == EncryptedJson.KeyDerivation.PBKDF_2) {
+    if (KeyDerivations.PBKDF2.equals(encrypted.getKeyDerivation())) {
       char[] passphrase = passphraseLookup.apply(encrypted.getKeyName());
       try {
         return stretchKey(passphrase, encrypted.getSalt(), encrypted.getIterations(),
@@ -265,8 +272,8 @@ public class EncryptionService<E extends EncryptedJson> {
    * @throws EncryptionException
    */
   Cipher createEncryptionCipher(SecretKey secret, E value) throws EncryptionException {
-    if (value.getCipher() == EncryptedJson.Cipher.AES_256_CBC
-        && value.getKeyDerivation() == EncryptedJson.KeyDerivation.PBKDF_2) {
+    if (Ciphers.AES_256_CBC.equals(value.getCipher())
+        && KeyDerivations.PBKDF2.equals(value.getKeyDerivation())) {
       try {
         SecretKeySpec spec = new SecretKeySpec(secret.getEncoded(), "AES");
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -294,8 +301,8 @@ public class EncryptionService<E extends EncryptedJson> {
    * @throws EncryptionException if the cipher could not be created for any reason.
    */
   Cipher createDecryptionCipher(SecretKey secret, E value) throws EncryptionException {
-    if (value.getCipher() == EncryptedJson.Cipher.AES_256_CBC
-        && value.getKeyDerivation() == EncryptedJson.KeyDerivation.PBKDF_2) {
+    if (Ciphers.AES_256_CBC.equals(value.getCipher())
+        && KeyDerivations.PBKDF2.equals(value.getKeyDerivation())) {
       try {
         SecretKeySpec spec = new SecretKeySpec(secret.getEncoded(), "AES");
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -321,8 +328,8 @@ public class EncryptionService<E extends EncryptedJson> {
   public E encrypt(byte[] data) throws EncryptionException {
     E result = encryptedSupplier.get();
     result.setSalt(saltSupplier.get());
-    result.setCipher(com.meltmedia.jackson.crypto.EncryptedJson.Cipher.AES_256_CBC);
-    result.setKeyDerivation(KeyDerivation.PBKDF_2);
+    result.setCipher(Defaults.DEFAULT_CIPHER);
+    result.setKeyDerivation(Defaults.DEFAULT_KEY_DERIVATION);
     result.setKeyLength(keyLength);
     result.setIterations(iterations);
     result.setEncrypted(true);
@@ -396,10 +403,17 @@ public class EncryptionService<E extends EncryptedJson> {
       EncryptionException {
     return new String(decrypt(value), encoding);
   }
+  
+  public JsonParser decrypt( JsonParser parser, String encoding ) throws JsonParseException, JsonMappingException, UnsupportedEncodingException, EncryptionException, IOException {
+    try {
+      return mapper.getFactory().createParser(decrypt((E)mapper.readValue(parser, EncryptedJson.class), encoding));
+    }
+    catch( EncryptionException ee ) { throw ee; }
+    catch( Exception e ) { throw new EncryptionException("could not decrypt from parser", e); }
+  }
 
   public <T> T decryptAs(E secret, String encoding, Class<T> type) throws EncryptionException {
     try {
-      String decrypted = decrypt(secret, encoding);
       return mapper.readValue(decrypt(secret, encoding), type);
     } catch (IOException e) {
       throw new EncryptionException("could not decrypt value", e);
@@ -408,5 +422,25 @@ public class EncryptionService<E extends EncryptedJson> {
 
   public String getName() {
     return name;
+  }
+
+  public Object decrypt(JsonParser parser, JsonDeserializer<?> deser, DeserializationContext context, JavaType type) {
+    try {
+      if( deser == null ) {
+        // TODO: This service allows for extension of EncryptedJson, but does not include
+        // a class defining the subtype being used.
+        return mapper.readValue(decrypt((E)mapper.readValue(parser, EncryptedJson.class)), type);
+      }
+      else {
+        return deser.deserialize(mapper.getFactory().createParser(decrypt((E)mapper.readValue(parser, EncryptedJson.class))), context);
+      }
+    }
+    catch( EncryptionException ee ) {
+      throw ee;
+    }
+    catch( Exception e ) {
+      throw new EncryptionException("could not decyrpt value", e);
+    }
+    
   }
 }

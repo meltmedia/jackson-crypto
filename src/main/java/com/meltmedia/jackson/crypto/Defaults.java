@@ -22,6 +22,8 @@ import javax.validation.Validator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Defaults {
+  public static final String DEFAULT_CIPHER = Ciphers.AES_256_CBC;
+  public static final String DEFAULT_KEY_DERIVATION = KeyDerivations.PBKDF2;
   public static final int KEY_LENGTH = 256;
   public static final int KEY_STRETCH_ITERATIONS = 2000;
   public static final int SALT_LENGTH = 4;
