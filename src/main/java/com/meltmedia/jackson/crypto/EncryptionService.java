@@ -332,7 +332,6 @@ public class EncryptionService<E extends EncryptedJson> {
     result.setKeyDerivation(Defaults.DEFAULT_KEY_DERIVATION);
     result.setKeyLength(keyLength);
     result.setIterations(iterations);
-    result.setEncrypted(true);
 
     SecretKey secret = createSecretKey(result);
     Cipher cipher = createEncryptionCipher(secret, result);

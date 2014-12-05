@@ -80,7 +80,7 @@ public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
     public Modifier() {
     }
     
-    public Modifier withSource( EncryptionService<EncryptedJson> source ) {
+    public Modifier addSource( EncryptionService<EncryptedJson> source ) {
       sourceMap.put(source.getName(), source);
       return this;
     }

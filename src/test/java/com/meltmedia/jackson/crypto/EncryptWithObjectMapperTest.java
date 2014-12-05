@@ -58,7 +58,7 @@ public class EncryptWithObjectMapperTest {
             .withObjectMapper(mapper)
             .build();
 
-    mapper.registerModule(new CryptoModule().withSource(service));
+    mapper.registerModule(new CryptoModule().addSource(service));
   }
 
   @Test
