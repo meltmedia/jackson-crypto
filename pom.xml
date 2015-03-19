@@ -25,7 +25,7 @@
   </parent>
   <groupId>com.meltmedia.jackson</groupId>
   <artifactId>jackson-crypto</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0</version>
   <packaging>jar</packaging>
   <name>Jackson Crypto</name>
   <description>A Jackson Module for encrypting JSON.</description>
@@ -43,7 +43,7 @@
     <connection>scm:git:git://github.com/meltmedia/jackson-crypto.git</connection>
     <developerConnection>scm:git:git@github.com:meltmedia/jackson-crypto.git</developerConnection>
     <url>https://github.com/meltmedia/jackson-crypto</url>
-    <tag>HEAD</tag>
+    <tag>v0.1.0</tag>
   </scm>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
