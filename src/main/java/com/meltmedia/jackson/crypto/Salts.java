@@ -55,8 +55,8 @@ public class Salts {
   public static Supplier<byte[]> saltSupplier() {
     return saltSupplier(defaultRandom, Defaults.SALT_LENGTH);
   }
-  
-  public static Supplier<byte[]> saltSupplier( final int length ) {
+
+  public static Supplier<byte[]> saltSupplier(final int length) {
     return saltSupplier(defaultRandom, length);
   }
 }

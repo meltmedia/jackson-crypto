@@ -48,11 +48,10 @@ public class DecryptWithObjectMapperTest {
 
     mapper = new ObjectMapper();
 
-    service = EncryptionService.builder()
-          .withPassphraseLookup(Functions.passphraseFunction(keys))
-          .withEncryptedJsonSupplier(Functions.encryptedJsonSupplier("current"))
-          .withObjectMapper(mapper)
-            .build();
+    service =
+        EncryptionService.builder().withPassphraseLookup(Functions.passphraseFunction(keys))
+            .withEncryptedJsonSupplier(Functions.encryptedJsonSupplier("current"))
+            .withObjectMapper(mapper).build();
 
     mapper.registerModule(new CryptoModule().addSource(service));
   }
@@ -80,14 +79,15 @@ public class DecryptWithObjectMapperTest {
     assertThat(roundTrip.value, equalTo("some value"));
 
   }
-  
+
   @Test
   public void shouldDecryptWithoutObjectCodec() throws IOException {
     WithEncrypted withEncrypted = new WithEncrypted().withStringValue("some secret");
 
     JsonNode node = mapper.convertValue(withEncrypted, JsonNode.class);
-    
-    WithEncrypted result = mapper.copy().readValue(new TreeTraversingParser(node), WithEncrypted.class);
+
+    WithEncrypted result =
+        mapper.copy().readValue(new TreeTraversingParser(node), WithEncrypted.class);
   }
 
 }

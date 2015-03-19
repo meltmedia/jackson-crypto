@@ -67,11 +67,11 @@ public class EncryptedJsonSerializer extends JsonSerializer<Object> {
     public Modifier() {
     }
 
-    public Modifier addSource( EncryptionService<EncryptedJson> source ) {
+    public Modifier addSource(EncryptionService<EncryptedJson> source) {
       sourceMap.put(source.getName(), source);
       return this;
     }
-    
+
     // we do not need to override this.
     @Override
     public List<BeanPropertyWriter> changeProperties(SerializationConfig config,
@@ -86,8 +86,9 @@ public class EncryptedJsonSerializer extends JsonSerializer<Object> {
 
         String source = encrypted.source();
         EncryptionService<EncryptedJson> service = sourceMap.get(source);
-        if( service == null ) {
-          throw new IllegalArgumentException(String.format("No encryption key source defined for %s.", source));
+        if (service == null) {
+          throw new IllegalArgumentException(String.format(
+              "No encryption key source defined for %s.", source));
         }
 
         JsonSerializer<Object> currentSer = writer.getSerializer();

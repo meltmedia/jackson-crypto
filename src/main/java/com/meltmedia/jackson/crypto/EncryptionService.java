@@ -135,8 +135,8 @@ public class EncryptionService<E extends EncryptedJson> {
       this.keyLength = keyLength;
       return this;
     }
-    
-    public Builder<E> withName( String name ) {
+
+    public Builder<E> withName(String name) {
       this.name = name;
       return this;
     }
@@ -177,11 +177,11 @@ public class EncryptionService<E extends EncryptedJson> {
   int iterations;
   int keyLength;
   String name;
-  Class<E> encryptedType = (Class<E>)EncryptedJson.class;
+  Class<E> encryptedType = (Class<E>) EncryptedJson.class;
 
-  public EncryptionService(String name, ObjectMapper mapper, Validator validator, Supplier<byte[]> saltSupplier,
-      Supplier<E> encryptedSupplier, Function<String, char[]> passphraseLookup, int iterations,
-      int keyLength) {
+  public EncryptionService(String name, ObjectMapper mapper, Validator validator,
+      Supplier<byte[]> saltSupplier, Supplier<E> encryptedSupplier,
+      Function<String, char[]> passphraseLookup, int iterations, int keyLength) {
     this.name = name;
     this.mapper = mapper;
     this.validator = validator;
@@ -359,9 +359,9 @@ public class EncryptionService<E extends EncryptedJson> {
       EncryptionException {
     return encrypt(text.getBytes(encoding));
   }
-  
-  public <T> E encryptValue( T node, String encoding ) throws UnsupportedEncodingException,
-  EncryptionException {
+
+  public <T> E encryptValue(T node, String encoding) throws UnsupportedEncodingException,
+      EncryptionException {
     try {
       return encrypt(mapper.writeValueAsString(node), encoding);
     } catch (JsonProcessingException e) {
@@ -402,13 +402,17 @@ public class EncryptionService<E extends EncryptedJson> {
       EncryptionException {
     return new String(decrypt(value), encoding);
   }
-  
-  public JsonParser decrypt( JsonParser parser, String encoding ) throws JsonParseException, JsonMappingException, UnsupportedEncodingException, EncryptionException, IOException {
+
+  public JsonParser decrypt(JsonParser parser, String encoding) throws JsonParseException,
+      JsonMappingException, UnsupportedEncodingException, EncryptionException, IOException {
     try {
-      return mapper.getFactory().createParser(decrypt((E)mapper.readValue(parser, EncryptedJson.class), encoding));
+      return mapper.getFactory().createParser(
+          decrypt((E) mapper.readValue(parser, EncryptedJson.class), encoding));
+    } catch (EncryptionException ee) {
+      throw ee;
+    } catch (Exception e) {
+      throw new EncryptionException("could not decrypt from parser", e);
     }
-    catch( EncryptionException ee ) { throw ee; }
-    catch( Exception e ) { throw new EncryptionException("could not decrypt from parser", e); }
   }
 
   public <T> T decryptAs(E secret, String encoding, Class<T> type) throws EncryptionException {
@@ -423,23 +427,24 @@ public class EncryptionService<E extends EncryptedJson> {
     return name;
   }
 
-  public Object decrypt(JsonParser parser, JsonDeserializer<?> deser, DeserializationContext context, JavaType type) {
+  public Object decrypt(JsonParser parser, JsonDeserializer<?> deser,
+      DeserializationContext context, JavaType type) {
     try {
-      if( deser == null ) {
-        // TODO: This service allows for extension of EncryptedJson, but does not include
+      if (deser == null) {
+        // TODO: This service allows for extension of EncryptedJson, but does
+        // not include
         // a class defining the subtype being used.
-        return mapper.readValue(decrypt((E)mapper.readValue(parser, EncryptedJson.class)), type);
+        return mapper.readValue(decrypt((E) mapper.readValue(parser, EncryptedJson.class)), type);
+      } else {
+        return deser.deserialize(
+            mapper.getFactory().createParser(
+                decrypt((E) mapper.readValue(parser, EncryptedJson.class))), context);
       }
-      else {
-        return deser.deserialize(mapper.getFactory().createParser(decrypt((E)mapper.readValue(parser, EncryptedJson.class))), context);
-      }
-    }
-    catch( EncryptionException ee ) {
+    } catch (EncryptionException ee) {
       throw ee;
-    }
-    catch( Exception e ) {
+    } catch (Exception e) {
       throw new EncryptionException("could not decyrpt value", e);
     }
-    
+
   }
 }

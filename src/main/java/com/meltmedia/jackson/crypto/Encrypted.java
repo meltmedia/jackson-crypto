@@ -24,5 +24,6 @@ import com.fasterxml.jackson.annotation.JacksonAnnotation;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Encrypted {
   String encoding() default Defaults.DEFAULT_ENCODING;
+
   String source() default Defaults.DEFAULT_NAME;
 }

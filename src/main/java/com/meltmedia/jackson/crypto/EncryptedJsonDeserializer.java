@@ -79,8 +79,8 @@ public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
 
     public Modifier() {
     }
-    
-    public Modifier addSource( EncryptionService<EncryptedJson> source ) {
+
+    public Modifier addSource(EncryptionService<EncryptedJson> source) {
       sourceMap.put(source.getName(), source);
       return this;
     }
@@ -92,16 +92,19 @@ public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
       while (beanPropertyIterator.hasNext()) {
         SettableBeanProperty settableBeanProperty = beanPropertyIterator.next();
         Encrypted encrypted = settableBeanProperty.getAnnotation(Encrypted.class);
-        if( encrypted == null ) continue;
-        
+        if (encrypted == null)
+          continue;
+
         String source = encrypted.source();
         EncryptionService<EncryptedJson> service = sourceMap.get(source);
-        if( service == null ) {
-          throw new IllegalArgumentException(String.format("No encryption key source defined for %s.", source));
+        if (service == null) {
+          throw new IllegalArgumentException(String.format(
+              "No encryption key source defined for %s.", source));
         }
         JsonDeserializer<Object> current = settableBeanProperty.getValueDeserializer();
         builder.addOrReplaceProperty(settableBeanProperty
-          .withValueDeserializer(new EncryptedJsonDeserializer(service, encrypted, current)), true);
+            .withValueDeserializer(new EncryptedJsonDeserializer(service, encrypted, current)),
+            true);
       }
       return builder;
     }

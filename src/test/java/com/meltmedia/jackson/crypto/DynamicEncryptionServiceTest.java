@@ -46,10 +46,10 @@ public class DynamicEncryptionServiceTest {
     Map<String, char[]> keys = new HashMap<>();
     keys.put("default", "password".toCharArray());
 
-    cipher = new EncryptionService.Builder<EncryptedJson>()
+    cipher =
+        new EncryptionService.Builder<EncryptedJson>()
             .withPassphraseLookup(Functions.passphraseFunction(keys))
-            .withEncryptedJsonSupplier(Functions.encryptedJsonSupplier("default"))
-            .build();
+            .withEncryptedJsonSupplier(Functions.encryptedJsonSupplier("default")).build();
   }
 
   @Test

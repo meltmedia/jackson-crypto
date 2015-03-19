@@ -49,14 +49,12 @@ public class EncryptWithObjectMapperTest {
     keys.put("current", "current secret".toCharArray());
     keys.put("old", "old secret".toCharArray());
 
-
     mapper = new ObjectMapper();
 
-    service =  EncryptionService.builder()
-      .withPassphraseLookup(Functions.passphraseFunction(keys))
+    service =
+        EncryptionService.builder().withPassphraseLookup(Functions.passphraseFunction(keys))
             .withEncryptedJsonSupplier(Functions.encryptedJsonSupplier("current"))
-            .withObjectMapper(mapper)
-            .build();
+            .withObjectMapper(mapper).build();
 
     mapper.registerModule(new CryptoModule().addSource(service));
   }

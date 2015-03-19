@@ -34,7 +34,7 @@ public class Functions {
       }
     };
   }
-  
+
   public static Supplier<EncryptedJson> encryptedJsonSupplier(final String keyName) {
     return new Supplier<EncryptedJson>() {
       @Override
@@ -50,32 +50,35 @@ public class Functions {
       @Override
       public char[] apply(String domain) {
         char[] key = System.getenv(envVar).toCharArray();
-        if( key == null ) throw new EncryptionException(String.format("No key defined in environment variable %s", domain));
+        if (key == null)
+          throw new EncryptionException(String.format("No key defined in environment variable %s",
+              domain));
         return key;
       }
     };
   }
-  
+
   public static Function<String, char[]> constPassphraseFunction(final String passphrase) {
     return new Function<String, char[]>() {
       @Override
       public char[] apply(String domain) {
-        if( domain != null ) {
+        if (domain != null) {
           throw new EncryptionException("const passphrase does not support named keys.");
         }
         return passphrase.toCharArray();
       }
     };
   }
-  
+
   public static Function<String, char[]> passphraseFunction(final Map<String, char[]> keys) {
     return new Function<String, char[]>() {
       @Override
       public char[] apply(String domain) {
         char[] key = keys.get(domain);
-        if( key == null ) throw new EncryptionException(String.format("No key defined for name %s", domain));
+        if (key == null)
+          throw new EncryptionException(String.format("No key defined for name %s", domain));
         return key;
       }
-    };    
+    };
   }
 }
