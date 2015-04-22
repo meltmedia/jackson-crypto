@@ -41,7 +41,7 @@ import com.meltmedia.jackson.crypto.beans.WithEncrypted;
 public class EncryptWithObjectMapperTest {
 
   ObjectMapper mapper;
-  EncryptionService<EncryptedJson> service;
+  EncryptionService service;
 
   @Before
   public void setUp() {
@@ -53,7 +53,7 @@ public class EncryptWithObjectMapperTest {
 
     service =
         EncryptionService.builder().withPassphraseLookup(Functions.passphraseFunction(keys))
-            .withEncryptedJsonSupplier(Functions.encryptedJsonSupplier("current"))
+            .withCurrentKeyName("current")
             .withObjectMapper(mapper).build();
 
     mapper.registerModule(new CryptoModule().addSource(service));

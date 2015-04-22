@@ -18,31 +18,12 @@ package com.meltmedia.jackson.crypto;
 import java.util.Map;
 
 import com.meltmedia.jackson.crypto.EncryptionService.Function;
-import com.meltmedia.jackson.crypto.EncryptionService.Supplier;
 
 /**
  * @author Christian Trimble
  *
  */
 public class Functions {
-
-  public static Supplier<EncryptedJson> encryptedJsonSupplier() {
-    return new Supplier<EncryptedJson>() {
-      @Override
-      public EncryptedJson get() {
-        return new EncryptedJson();
-      }
-    };
-  }
-
-  public static Supplier<EncryptedJson> encryptedJsonSupplier(final String keyName) {
-    return new Supplier<EncryptedJson>() {
-      @Override
-      public EncryptedJson get() {
-        return new EncryptedJson().withKeyName(keyName);
-      }
-    };
-  }
 
   public static Function<String, char[]> passphraseFunction(final String envVar) {
     return new Function<String, char[]>() {

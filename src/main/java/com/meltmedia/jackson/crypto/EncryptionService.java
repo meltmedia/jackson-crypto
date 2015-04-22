@@ -74,7 +74,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Christian Trimble
  *
  */
-public class EncryptionService<E extends EncryptedJson> {
+public class EncryptionService {
   private static final Logger logger = LoggerFactory.getLogger(EncryptionService.class);
 
   /**
@@ -91,67 +91,64 @@ public class EncryptionService<E extends EncryptedJson> {
     }
   }
 
-  public static class Builder<E extends EncryptedJson> {
+  public static class Builder {
     ObjectMapper mapper;
     Validator validator;
-    Supplier<E> encryptedSupplier;
     Function<String, char[]> passphraseLookup;
     Supplier<byte[]> saltSupplier;
     int iterations = Defaults.KEY_STRETCH_ITERATIONS;
     int keyLength = Defaults.KEY_LENGTH;
     String name = Defaults.DEFAULT_NAME;
+    String currentKeyName;
 
-    public Builder<E> withObjectMapper(ObjectMapper mapper) {
+    public Builder withObjectMapper(ObjectMapper mapper) {
       this.mapper = mapper;
       return this;
     }
 
-    public Builder<E> withValidator(Validator validator) {
+    public Builder withValidator(Validator validator) {
       this.validator = validator;
       return this;
     }
-
-    public Builder<E> withEncryptedJsonSupplier(Supplier<E> encryptedSupplier) {
-      this.encryptedSupplier = encryptedSupplier;
+    
+    public Builder withCurrentKeyName( String currentKeyName ) {
+      this.currentKeyName = currentKeyName;
       return this;
     }
 
-    public Builder<E> withPassphraseLookup(Function<String, char[]> passphraseLookup) {
+    public Builder withPassphraseLookup(Function<String, char[]> passphraseLookup) {
       this.passphraseLookup = passphraseLookup;
       return this;
     }
 
-    public Builder<E> withSaltSupplier(Supplier<byte[]> saltSupplier) {
+    public Builder withSaltSupplier(Supplier<byte[]> saltSupplier) {
       this.saltSupplier = saltSupplier;
       return this;
     }
 
-    public Builder<E> withIterations(int iterations) {
+    public Builder withIterations(int iterations) {
       this.iterations = iterations;
       return this;
     }
 
-    public Builder<E> withKeyLength(int keyLength) {
+    public Builder withKeyLength(int keyLength) {
       this.keyLength = keyLength;
       return this;
     }
 
-    public Builder<E> withName(String name) {
+    public Builder withName(String name) {
       this.name = name;
       return this;
     }
 
-    public EncryptionService<E> build() {
+    public EncryptionService build() {
       Supplier<byte[]> buildSaltSupplier =
           saltSupplier != null ? saltSupplier : Salts.saltSupplier();
-      if (encryptedSupplier == null) {
-        throw new IllegalArgumentException("the encrypted supplier is required.");
-      }
       if (passphraseLookup == null) {
         throw new IllegalArgumentException("the key lookup function is required.");
       }
-      return new EncryptionService<E>(name, Defaults.defaultObjectMapper(mapper),
-          Defaults.defaultValidator(validator), buildSaltSupplier, encryptedSupplier,
+      return new EncryptionService(name, Defaults.defaultObjectMapper(mapper),
+          Defaults.defaultValidator(validator), currentKeyName, buildSaltSupplier,
           passphraseLookup, iterations, keyLength);
     }
 
@@ -165,11 +162,10 @@ public class EncryptionService<E extends EncryptedJson> {
     public R apply(D domain);
   }
 
-  public static <E extends EncryptedJson> Builder<E> builder() {
-    return new Builder<E>();
+  public static Builder builder() {
+    return new Builder();
   }
 
-  Supplier<E> encryptedSupplier;
   Supplier<byte[]> saltSupplier;
   Function<String, char[]> passphraseLookup;
   ObjectMapper mapper;
@@ -177,27 +173,27 @@ public class EncryptionService<E extends EncryptedJson> {
   int iterations;
   int keyLength;
   String name;
-  Class<E> encryptedType = (Class<E>) EncryptedJson.class;
+  String currentKeyName;
 
   public EncryptionService(String name, ObjectMapper mapper, Validator validator,
-      Supplier<byte[]> saltSupplier, Supplier<E> encryptedSupplier,
+      String currentKeyName, Supplier<byte[]> saltSupplier,
       Function<String, char[]> passphraseLookup, int iterations, int keyLength) {
     this.name = name;
     this.mapper = mapper;
     this.validator = validator;
-    this.encryptedSupplier = encryptedSupplier;
     this.passphraseLookup = passphraseLookup;
     this.saltSupplier = saltSupplier;
     this.iterations = iterations;
     this.keyLength = keyLength;
+    this.currentKeyName = currentKeyName;
   }
 
-  private void validate(E encrypted) throws EncryptionException {
+  private void validate(EncryptedJson encrypted) throws EncryptionException {
     if (encrypted == null) {
       throw new EncryptionException("null encrypted value encountered");
     }
 
-    Set<ConstraintViolation<E>> violations = validator.validate(encrypted);
+    Set<ConstraintViolation<EncryptedJson>> violations = validator.validate(encrypted);
 
     if (!violations.isEmpty()) {
       String message =
@@ -208,7 +204,7 @@ public class EncryptionService<E extends EncryptedJson> {
     }
   }
 
-  private String validationErrorMessage(E encrypted, Set<ConstraintViolation<E>> violations) {
+  private String validationErrorMessage(EncryptedJson encrypted, Set<ConstraintViolation<EncryptedJson>> violations) {
     StringBuilder sb = new StringBuilder();
     try {
       sb.append("value:").append(mapper.writeValueAsString(encrypted)).append("\n");
@@ -216,7 +212,7 @@ public class EncryptionService<E extends EncryptedJson> {
       sb.append(e.getMessage()).append("\n");
     }
     sb.append("violations:\n");
-    for (ConstraintViolation<E> violation : violations) {
+    for (ConstraintViolation<EncryptedJson> violation : violations) {
       sb.append("- ").append(violation.getPropertyPath().toString() + " " + violation.getMessage())
           .append("\n");
     }
@@ -230,7 +226,7 @@ public class EncryptionService<E extends EncryptedJson> {
    * @return the secret key appropriate for the specified value
    * @throws EncryptionException
    */
-  SecretKey createSecretKey(E encrypted) throws EncryptionException {
+  SecretKey createSecretKey(EncryptedJson encrypted) throws EncryptionException {
     if (KeyDerivations.PBKDF2.equals(encrypted.getKeyDerivation())) {
       char[] passphrase = passphraseLookup.apply(encrypted.getKeyName());
       try {
@@ -271,7 +267,7 @@ public class EncryptionService<E extends EncryptedJson> {
    * @return the cipher to use.
    * @throws EncryptionException
    */
-  Cipher createEncryptionCipher(SecretKey secret, E value) throws EncryptionException {
+  Cipher createEncryptionCipher(SecretKey secret, EncryptedJson value) throws EncryptionException {
     if (Ciphers.AES_256_CBC.equals(value.getCipher())
         && KeyDerivations.PBKDF2.equals(value.getKeyDerivation())) {
       try {
@@ -300,7 +296,7 @@ public class EncryptionService<E extends EncryptedJson> {
    * @return a cipher that will decrypt the specified value with the specified key.
    * @throws EncryptionException if the cipher could not be created for any reason.
    */
-  Cipher createDecryptionCipher(SecretKey secret, E value) throws EncryptionException {
+  Cipher createDecryptionCipher(SecretKey secret, EncryptedJson value) throws EncryptionException {
     if (Ciphers.AES_256_CBC.equals(value.getCipher())
         && KeyDerivations.PBKDF2.equals(value.getKeyDerivation())) {
       try {
@@ -325,8 +321,9 @@ public class EncryptionService<E extends EncryptedJson> {
    * @return the encrypted value, along with the salt, iv, and name of the settings used.
    * @throws EncryptionException if the value could not be encrypted for any reason.
    */
-  public E encrypt(byte[] data) throws EncryptionException {
-    E result = encryptedSupplier.get();
+  public EncryptedJson encrypt(byte[] data) throws EncryptionException {
+    EncryptedJson result = new EncryptedJson();
+    result.setKeyName(currentKeyName);
     result.setSalt(saltSupplier.get());
     result.setCipher(Defaults.DEFAULT_CIPHER);
     result.setKeyDerivation(Defaults.DEFAULT_KEY_DERIVATION);
@@ -355,12 +352,12 @@ public class EncryptionService<E extends EncryptedJson> {
    * @throws UnsupportedEncodingException if the encoding is unsupported.
    * @throws EncryptionException if the value could not be encrypted for any reason.
    */
-  public E encrypt(String text, String encoding) throws UnsupportedEncodingException,
+  public EncryptedJson encrypt(String text, String encoding) throws UnsupportedEncodingException,
       EncryptionException {
     return encrypt(text.getBytes(encoding));
   }
 
-  public <T> E encryptValue(T node, String encoding) throws UnsupportedEncodingException,
+  public <T> EncryptedJson encryptValue(T node, String encoding) throws UnsupportedEncodingException,
       EncryptionException {
     try {
       return encrypt(mapper.writeValueAsString(node), encoding);
@@ -376,7 +373,7 @@ public class EncryptionService<E extends EncryptedJson> {
    * @return the decrypted value.
    * @throws EncryptionException if the value could not be decypted for any reason.
    */
-  public byte[] decrypt(E value) throws EncryptionException {
+  public byte[] decrypt(EncryptedJson value) throws EncryptionException {
     // make sure the value is valid.
     validate(value);
 
@@ -398,7 +395,7 @@ public class EncryptionService<E extends EncryptedJson> {
    * @throws UnsupportedEncodingException if the encoding is not supported.
    * @throws EncryptionException if the value could not be decrypted for any reason.
    */
-  public String decrypt(E value, String encoding) throws UnsupportedEncodingException,
+  public String decrypt(EncryptedJson value, String encoding) throws UnsupportedEncodingException,
       EncryptionException {
     return new String(decrypt(value), encoding);
   }
@@ -407,7 +404,7 @@ public class EncryptionService<E extends EncryptedJson> {
       JsonMappingException, UnsupportedEncodingException, EncryptionException, IOException {
     try {
       return mapper.getFactory().createParser(
-          decrypt((E) mapper.readValue(parser, EncryptedJson.class), encoding));
+          decrypt(mapper.readValue(parser, EncryptedJson.class), encoding));
     } catch (EncryptionException ee) {
       throw ee;
     } catch (Exception e) {
@@ -415,7 +412,7 @@ public class EncryptionService<E extends EncryptedJson> {
     }
   }
 
-  public <T> T decryptAs(E secret, String encoding, Class<T> type) throws EncryptionException {
+  public <T> T decryptAs(EncryptedJson secret, String encoding, Class<T> type) throws EncryptionException {
     try {
       return mapper.readValue(decrypt(secret, encoding), type);
     } catch (IOException e) {
@@ -431,14 +428,11 @@ public class EncryptionService<E extends EncryptedJson> {
       DeserializationContext context, JavaType type) {
     try {
       if (deser == null) {
-        // TODO: This service allows for extension of EncryptedJson, but does
-        // not include
-        // a class defining the subtype being used.
-        return mapper.readValue(decrypt((E) mapper.readValue(parser, EncryptedJson.class)), type);
+        return mapper.readValue(decrypt(mapper.readValue(parser, EncryptedJson.class)), type);
       } else {
         return deser.deserialize(
             mapper.getFactory().createParser(
-                decrypt((E) mapper.readValue(parser, EncryptedJson.class))), context);
+                decrypt(mapper.readValue(parser, EncryptedJson.class))), context);
       }
     } catch (EncryptionException ee) {
       throw ee;

@@ -34,10 +34,10 @@ import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 public class EncryptedJsonSerializer extends JsonSerializer<Object> {
 
   private JsonSerializer<Object> baseSer;
-  private EncryptionService<EncryptedJson> service;
+  private EncryptionService service;
   private Encrypted annotation;
 
-  public EncryptedJsonSerializer(EncryptionService<EncryptedJson> service, Encrypted annotation,
+  public EncryptedJsonSerializer(EncryptionService service, Encrypted annotation,
       JsonSerializer<Object> baseSer) {
     this.service = service;
     this.annotation = annotation;
@@ -62,12 +62,12 @@ public class EncryptedJsonSerializer extends JsonSerializer<Object> {
   }
 
   public static class Modifier extends BeanSerializerModifier {
-    private Map<String, EncryptionService<EncryptedJson>> sourceMap = new LinkedHashMap<>();
+    private Map<String, EncryptionService> sourceMap = new LinkedHashMap<>();
 
     public Modifier() {
     }
 
-    public Modifier addSource(EncryptionService<EncryptedJson> source) {
+    public Modifier addSource(EncryptionService source) {
       sourceMap.put(source.getName(), source);
       return this;
     }
@@ -85,7 +85,7 @@ public class EncryptedJsonSerializer extends JsonSerializer<Object> {
         }
 
         String source = encrypted.source();
-        EncryptionService<EncryptedJson> service = sourceMap.get(source);
+        EncryptionService service = sourceMap.get(source);
         if (service == null) {
           throw new IllegalArgumentException(String.format(
               "No encryption key source defined for %s.", source));

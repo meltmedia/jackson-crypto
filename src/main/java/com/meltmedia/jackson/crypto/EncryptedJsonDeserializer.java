@@ -22,7 +22,6 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.DeserializationConfig;
@@ -37,20 +36,19 @@ import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
 public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
     implements ContextualDeserializer {
 
-  private EncryptionService<EncryptedJson> service;
+  private EncryptionService service;
   private JsonDeserializer<Object> baseDeser;
   private Encrypted annotation;
   private BeanProperty property;
-  private ObjectCodec valueParser;
 
-  public EncryptedJsonDeserializer(EncryptionService<EncryptedJson> service, Encrypted annotation,
+  public EncryptedJsonDeserializer(EncryptionService service, Encrypted annotation,
       JsonDeserializer<Object> baseDeser) {
     this.service = service;
     this.annotation = annotation;
     this.baseDeser = baseDeser;
   }
 
-  public EncryptedJsonDeserializer(EncryptionService<EncryptedJson> service, Encrypted encrypt,
+  public EncryptedJsonDeserializer(EncryptionService service, Encrypted encrypt,
       JsonDeserializer<Object> wrapped, BeanProperty property) {
     this.service = service;
     this.annotation = encrypt;
@@ -75,12 +73,12 @@ public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
   }
 
   public static class Modifier extends BeanDeserializerModifier {
-    private Map<String, EncryptionService<EncryptedJson>> sourceMap = new LinkedHashMap<>();
+    private Map<String, EncryptionService> sourceMap = new LinkedHashMap<>();
 
     public Modifier() {
     }
 
-    public Modifier addSource(EncryptionService<EncryptedJson> source) {
+    public Modifier addSource(EncryptionService source) {
       sourceMap.put(source.getName(), source);
       return this;
     }
@@ -96,7 +94,7 @@ public class EncryptedJsonDeserializer extends JsonDeserializer<Object>
           continue;
 
         String source = encrypted.source();
-        EncryptionService<EncryptedJson> service = sourceMap.get(source);
+        EncryptionService service = sourceMap.get(source);
         if (service == null) {
           throw new IllegalArgumentException(String.format(
               "No encryption key source defined for %s.", source));

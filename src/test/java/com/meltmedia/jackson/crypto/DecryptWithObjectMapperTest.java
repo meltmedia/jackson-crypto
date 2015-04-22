@@ -38,7 +38,7 @@ import com.meltmedia.jackson.crypto.beans.WithEncrypted;
 public class DecryptWithObjectMapperTest {
 
   ObjectMapper mapper;
-  EncryptionService<EncryptedJson> service;
+  EncryptionService service;
 
   @Before
   public void setUp() {
@@ -50,7 +50,7 @@ public class DecryptWithObjectMapperTest {
 
     service =
         EncryptionService.builder().withPassphraseLookup(Functions.passphraseFunction(keys))
-            .withEncryptedJsonSupplier(Functions.encryptedJsonSupplier("current"))
+            .withCurrentKeyName("current")
             .withObjectMapper(mapper).build();
 
     mapper.registerModule(new CryptoModule().addSource(service));
@@ -86,8 +86,7 @@ public class DecryptWithObjectMapperTest {
 
     JsonNode node = mapper.convertValue(withEncrypted, JsonNode.class);
 
-    WithEncrypted result =
-        mapper.copy().readValue(new TreeTraversingParser(node), WithEncrypted.class);
+    mapper.copy().readValue(new TreeTraversingParser(node), WithEncrypted.class);
   }
 
 }

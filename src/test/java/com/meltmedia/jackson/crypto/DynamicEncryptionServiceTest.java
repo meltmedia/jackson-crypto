@@ -37,7 +37,7 @@ public class DynamicEncryptionServiceTest {
   public static String SALT_FROM_NODE = "LhrWBg==";
   public static String VALUE_FROM_NODE = "p5lQp8jLM3Xt6pGL2s/YpPC+Xr28FJQl07Qh30qtDIE=";
   public static String DECRYPTED_FROM_NODE = "This is my text!";
-  EncryptionService<EncryptedJson> cipher;
+  EncryptionService cipher;
   Base64 base64 = new Base64();
 
   @Before
@@ -47,9 +47,10 @@ public class DynamicEncryptionServiceTest {
     keys.put("default", "password".toCharArray());
 
     cipher =
-        new EncryptionService.Builder<EncryptedJson>()
+        new EncryptionService.Builder()
             .withPassphraseLookup(Functions.passphraseFunction(keys))
-            .withEncryptedJsonSupplier(Functions.encryptedJsonSupplier("default")).build();
+            .withCurrentKeyName("default")
+            .build();
   }
 
   @Test
