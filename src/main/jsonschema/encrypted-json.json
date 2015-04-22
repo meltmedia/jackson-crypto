@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "description": "An ecrypted block of JSON.",
   "type": "object",
-  "required": [ "salt", "iv", "value", "cipher", "keyDerivation", "keyLength", "encrypted"],
+  "required": [ "salt", "iv", "value", "cipher", "keyDerivation", "keyLength", "iterations"],
   "properties": {
     "salt": {
       "type": "string",
