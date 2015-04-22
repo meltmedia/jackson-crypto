@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.meltmedia.jackson.crypto.beans.CustomEncryptedJson;
 
 public class DynamicEncryptionServiceTest {
 
@@ -71,6 +72,24 @@ public class DynamicEncryptionServiceTest {
     assertThat("decrypt value from node cipher", result, equalTo(DECRYPTED_FROM_NODE));
   }
 
+  @Test
+  public void shouldDecryptWithCustomEncryptedJson() throws EncryptionException,
+      UnsupportedEncodingException {
+    CustomEncryptedJson value = new CustomEncryptedJson();
+    value.setKeyName("default");
+    value.setIv(base64.decode(IV_FROM_NODE));
+    value.setSalt(base64.decode(SALT_FROM_NODE));
+    value.setValue(base64.decode(VALUE_FROM_NODE));
+    value.setIterations(2000);
+    value.setKeyLength(256);
+    value.setCipher(Ciphers.AES_256_CBC);
+    value.setKeyDerivation(KeyDerivations.PBKDF2);
+
+    String result = cipher.decrypt(value, "UTF-8");
+
+    assertThat("decrypt value from node cipher", result, equalTo(DECRYPTED_FROM_NODE));
+  }
+  
   @Test
   public void shouldSerializeInBase64() throws EncryptionException, UnsupportedEncodingException,
       JsonProcessingException {

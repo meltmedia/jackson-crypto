@@ -341,6 +341,10 @@ public class EncryptionService {
       throw new EncryptionException("could not encrypt text", e);
     }
   }
+  
+  public <E> E encrypt(byte[] data, Class<E> encryptedType) throws EncryptionException {
+    return mapper.convertValue(encrypt(data), encryptedType);
+  }
 
   /**
    * Encrypts the given text using the specified encoding.
@@ -357,6 +361,11 @@ public class EncryptionService {
     return encrypt(text.getBytes(encoding));
   }
 
+  public <E> E encrypt(String text, String encoding, Class<E> encryptedType) throws UnsupportedEncodingException,
+      EncryptionException {
+    return mapper.convertValue(encryptValue(text, encoding), encryptedType);
+  }
+
   public <T> EncryptedJson encryptValue(T node, String encoding) throws UnsupportedEncodingException,
       EncryptionException {
     try {
@@ -364,6 +373,11 @@ public class EncryptionService {
     } catch (JsonProcessingException e) {
       throw new EncryptionException("could not serialize node", e);
     }
+  }
+  
+  public <T, E> E encryptValue(T node, String encoding, Class<E> encryptedType ) throws UnsupportedEncodingException,
+    EncryptionException {
+    return mapper.convertValue(encryptValue(node, encoding), encryptedType);
   }
 
   /**
@@ -386,6 +400,10 @@ public class EncryptionService {
     }
   }
 
+  public <E> byte[] decypt(E value) throws EncryptionException {
+    return decrypt(mapper.convertValue(value, EncryptedJson.class));
+  }
+
   /**
    * Decrypts the encrypted value into a string, using the specified encoding.
    * 
@@ -400,6 +418,11 @@ public class EncryptionService {
     return new String(decrypt(value), encoding);
   }
 
+  public <E> String decrypt(E value, String encoding) throws UnsupportedEncodingException,
+      EncryptionException {
+    return decrypt(mapper.convertValue(value, EncryptedJson.class), encoding);
+  }
+  
   public JsonParser decrypt(JsonParser parser, String encoding) throws JsonParseException,
       JsonMappingException, UnsupportedEncodingException, EncryptionException, IOException {
     try {
@@ -412,12 +435,17 @@ public class EncryptionService {
     }
   }
 
+
   public <T> T decryptAs(EncryptedJson secret, String encoding, Class<T> type) throws EncryptionException {
     try {
       return mapper.readValue(decrypt(secret, encoding), type);
     } catch (IOException e) {
       throw new EncryptionException("could not decrypt value", e);
     }
+  }
+  
+  public <T, E> T decryptAs(E secret, String encoding, Class<T> type) throws EncryptionException {
+    return decryptAs(mapper.convertValue(secret, EncryptedJson.class), encoding, type);
   }
 
   public String getName() {

@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.meltmedia.jackson.crypto.beans.CustomEncryptedJson;
 import com.meltmedia.jackson.crypto.beans.Nested;
 import com.meltmedia.jackson.crypto.beans.SerAnnotatedWithEncrypted;
 import com.meltmedia.jackson.crypto.beans.WithEncrypted;
@@ -70,6 +71,22 @@ public class EncryptWithObjectMapperTest {
         not(containsString("some value")));
 
     EncryptedJson result = mapper.convertValue(encrypted.get("stringValue"), EncryptedJson.class);
+    JsonNode roundTrip = service.decryptAs(result, "UTF-8", JsonNode.class);
+
+    assertThat(roundTrip.asText(), equalTo("some value"));
+  }
+  
+  @Test
+  public void shouldEncryptStringWithCustomEncryptedJson() throws IOException {
+    WithEncrypted toEncrypt = new WithEncrypted().withStringValue("some value");
+
+    ObjectNode encrypted = mapper.readValue(mapper.writeValueAsString(toEncrypt), ObjectNode.class);
+
+    assertThat("has nested value", encrypted.at("/stringValue/value").isNull(), equalTo(false));
+    assertThat("nested value is encrypted", encrypted.at("/stringValue/value").asText(),
+        not(containsString("some value")));
+
+    CustomEncryptedJson result = mapper.convertValue(encrypted.get("stringValue"), CustomEncryptedJson.class);
     JsonNode roundTrip = service.decryptAs(result, "UTF-8", JsonNode.class);
 
     assertThat(roundTrip.asText(), equalTo("some value"));
