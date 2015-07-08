@@ -12,7 +12,7 @@ To use this package from Maven, include the following dependency in your project
 <dependency>
   <groupId>com.meltmedia.jackson</groupId>
   <artifactId>jackson-crypto</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 </dpendency>
 ```
 
@@ -48,14 +48,17 @@ will serialize into JSON like:
 ```
 {
   "secret": {
-    "salt": ""
-    "iv": ""
-    "value": ""
-    "cipher": "aes-256-cbc"
-    "keyDerivation": "pbkdf2"
-    "keyLength": 256
+    "salt": "tKD8wQ==",
+    "iv": "s9hTJRaZn6fxxpA4nVfDag==",
+    "value": "UZENJOltf+9EZS03AXbmeg==",
+    "cipher": "aes-256-cbc",
+    "keyDerivation": "pbkdf2",
+    "keyLength": 256,
     "iterations": 2000
-    "encrypted": true
   }
 }
 ```
+
+## Example
+
+This project does not yet have its own example project, but you can see an example of using this library in the [Dropwizard Crypto example project](https://github.com/meltmedia/dropwizard-crypto/tree/develop/example).
